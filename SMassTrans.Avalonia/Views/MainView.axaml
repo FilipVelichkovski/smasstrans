@@ -1,0 +1,46 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:SMassTrans.Avalonia.ViewModels"
+             xmlns:views="clr-namespace:SMassTrans.Avalonia.Views"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="SMassTrans.Avalonia.Views.MainView"
+             x:DataType="vm:MainViewModel">
+  <Design.DataContext>
+    <!-- This only sets the DataContext for the previewer in an IDE-->
+    <vm:MainViewModel />
+  </Design.DataContext>
+    <UserControl.Resources>
+        <views:LineRouteIdConverter x:Key="lineRouteIdConverter"/>
+    </UserControl.Resources>
+    <Grid RowDefinitions="*,30">
+        <TabControl Name="TabCtl" SelectionChanged="SelectingItemsControl_OnSelectionChanged">
+            <TabItem Header="Stops" Content="{Binding StopContent}">
+            </TabItem>
+            <TabItem Header="Stops (GPS)" Content="{Binding StopGPSContent}" > 
+            </TabItem>
+            <TabItem Header="Lines" >
+                <ListBox Name="LineBox" ItemsSource="{Binding Lines}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Tapped ="LineDoubleTapped" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                <TextBlock Text="{Binding LineRouteId, Converter={StaticResource lineRouteIdConverter}}" Padding="0,10,5,0" />
+                                <TextBlock Text="{Binding Name}" Padding="0,10,5,0" />
+                                <TextBlock Text="{Binding Direction}" Padding="0,10,5,0" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </TabItem>
+            <TabItem Header="{Binding MapName}" Name="MapTabItem">
+              
+                
+            </TabItem>
+        </TabControl>
+        <StackPanel Grid.Row="1" Orientation="Horizontal">
+            <Button Click="Button_OnClick">Refresh lines and stops</Button>
+            <Button Click="Bitpazar_OnClick"> Teleport to BitPazar</Button>
+        </StackPanel>
+    </Grid>
+</UserControl>

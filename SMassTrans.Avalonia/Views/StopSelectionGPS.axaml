@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:SMassTrans.Avalonia.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="SMassTrans.Avalonia.Views.StopSelectionGPS">
+    <Grid RowDefinitions="30,*">
+        <Grid ColumnDefinitions="80, 80,40">
+            <TextBox Name="Lat" TextChanged="TextBox_OnTextChanged">42.000713</TextBox>
+            <TextBox Grid.Column="1" Name="Long" TextChanged="TextBox_OnTextChanged">21.440125</TextBox>
+            <Button Grid.Column="2" Click="Button_OnClick">GET MY LOCATION DAMN IT</Button>
+        </Grid>
+        <ListBox Grid.Row="1" ItemsSource="{Binding Stops}" Name="Stops" x:DataType="viewModels:MainViewModel">
+            <ListBox.Styles>
+                <Style Selector="ListBoxItem">
+                    <Setter Property="Padding" Value="0" />
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                </Style>
+            </ListBox.Styles>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal" Background="Red" Margin="2"  Tapped="StopTap" PointerReleased="InputElement_OnPointerReleased"  >
+                        <TextBlock Text="{Binding StopName}" Margin="5,5,10,5" />
+                        <TextBlock Text="{Binding StopNum}" Margin="10,5,5,5" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </Grid>
+ 
+</UserControl>
