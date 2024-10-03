@@ -29,6 +29,11 @@
              
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal" Background="DarkBlue" Margin="2"   PointerReleased="LinePointerReleased"  >
+                            <StackPanel.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Show line in GPS" Click="LineGPS"/>
+                                </ContextMenu>
+                            </StackPanel.ContextMenu>
                             <TextBlock Text="{Binding LineAndRoute, Converter={StaticResource lineRouteIdConverter}}" Margin="5,5,10,5" />
                             <TextBlock Text="{Binding Time}"  Margin="10,5,5,5" />
                         </StackPanel>
@@ -38,7 +43,7 @@
             
         </RefreshContainer>
         <StackPanel Grid.Row="1" Orientation="Horizontal">
-            <Button Click="RefreshReqeusted">Refresh</Button>
+            <Button Click="RefreshRequested">Refresh</Button>
             <Button Click="BackRequested">Back</Button>
         </StackPanel>
         

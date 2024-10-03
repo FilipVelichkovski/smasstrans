@@ -1,13 +1,9 @@
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using Avalonia;
 using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Markup.Xaml;
 using SMassTrans.Avalonia.ViewModels;
 using SMassTrans.Shared;
 
@@ -15,30 +11,22 @@ namespace SMassTrans.Avalonia.Views;
 
 public partial class StopSelectionGPS : UserControl
 {
-   
     public StopSelectionGPS()
     {
         InitializeComponent();
-      
     }
     private void StopTap(object? sender, TappedEventArgs e)
     {
-        Debug.WriteLine("stop tap");
-        if ((MainViewModel)DataContext is { } a && sender is StackPanel panel && panel.DataContext is IStop stop )
-        {
-            a.PrevStopGPSContent = a.StopGPSContent;
-            a.StopGPSContent = new StopInfo(stop,a.client, true);
-        }
+        if (DataContext is not MainViewModel a || sender is not StackPanel { DataContext: IStop stop }) return;
+        a.PrevStopGPSContent = a.StopGPSContent;
+        a.StopGPSContent = new StopInfo(stop,a.client, true);
     }
 
     private void InputElement_OnPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
-        Debug.WriteLine("InputElement_OnPointerReleased");
-        if ((MainViewModel)DataContext is { } a && sender is StackPanel panel && panel.DataContext is IStop stop )
-        {
-            a.PrevStopGPSContent = a.StopGPSContent;
-            a.StopGPSContent = new StopInfo(stop,a.client,true);
-        }
+        if (DataContext is not MainViewModel a || sender is not StackPanel { DataContext: IStop stop }) return;
+        a.PrevStopGPSContent = a.StopGPSContent;
+        a.StopGPSContent = new StopInfo(stop,a.client,true);
     }
 
     private void TextBox_OnTextChanged(object? sender, TextChangedEventArgs e)
@@ -51,8 +39,12 @@ public partial class StopSelectionGPS : UserControl
      
     }
     //https://github.com/microsoft/referencesource/blob/master/System.Device/GeoCoordinate.cs#L190-L239
-public Double GetDistanceTo(double Latitude, double Longitude, double OtherLatitude, double OtherLongitude)
+        public Double GetDistanceTo(double latitude, double longitude, double otherLatitude, double otherLongitude)
         {
+            if(double.IsNaN(latitude)) throw new ArgumentOutOfRangeException(nameof(latitude), "Latitude is NaN");
+            if(double.IsNaN(longitude)) throw new ArgumentOutOfRangeException(nameof(longitude), "Longitude is NaN");
+            if(double.IsNaN(otherLatitude)) throw new ArgumentOutOfRangeException(nameof(otherLatitude), "OtherLatitude is NaN");
+            if(double.IsNaN(otherLongitude)) throw new ArgumentOutOfRangeException(nameof(otherLongitude), "OtherLongitude is NaN");
             //  The Haversine formula according to Dr. Math.
             //  http://mathforum.org/library/drmath/view/51879.html
                 
@@ -70,30 +62,24 @@ public Double GetDistanceTo(double Latitude, double Longitude, double OtherLatit
             //    * The locations of the two points in 
             //        spherical coordinates (longitude and 
             //        latitude) are lon1,lat1 and lon2, lat2.
+      
+            var dDistance = double.NaN;
 
-            if (Double.IsNaN(Latitude)  || Double.IsNaN(Longitude) ||
-                Double.IsNaN(OtherLatitude) || Double.IsNaN(OtherLongitude))
-            {
-                throw new ArgumentException("NAN IN GETDISTANCETO");
-            }
+            var dLat1 = latitude * (Math.PI / 180.0);
+            var dLon1 = longitude * (Math.PI / 180.0);
+            var dLat2 = otherLatitude * (Math.PI / 180.0);
+            var dLon2 = otherLongitude * (Math.PI / 180.0);
 
-            double dDistance = Double.NaN;
-
-            double dLat1 = Latitude * (Math.PI / 180.0);
-            double dLon1 = Longitude * (Math.PI / 180.0);
-            double dLat2 = OtherLatitude * (Math.PI / 180.0);
-            double dLon2 = OtherLongitude * (Math.PI / 180.0);
-
-            double dLon = dLon2 - dLon1;
-            double dLat = dLat2 - dLat1;
+            var dLon = dLon2 - dLon1;
+            var dLat = dLat2 - dLat1;
 
             // Intermediate result a.
-            double a = Math.Pow(Math.Sin(dLat / 2.0), 2.0) + 
-                       Math.Cos(dLat1) * Math.Cos(dLat2) * 
-                       Math.Pow(Math.Sin(dLon / 2.0), 2.0);
+            var a = Math.Pow(Math.Sin(dLat / 2.0), 2.0) + 
+                    Math.Cos(dLat1) * Math.Cos(dLat2) * 
+                    Math.Pow(Math.Sin(dLon / 2.0), 2.0);
 
             // Intermediate result c (great circle distance in Radians).
-            double c = 2.0 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1.0 - a));
+            var c = 2.0 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1.0 - a));
 
             // Distance.
             const Double kEarthRadiusMs = 6376500;

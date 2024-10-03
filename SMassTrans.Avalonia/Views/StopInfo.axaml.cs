@@ -77,26 +77,28 @@ public partial class StopInfo : UserControl
         deferral.Complete();
     }
 
-    private void RefreshReqeusted(object? sender, RoutedEventArgs e)
+    private void RefreshRequested(object? sender, RoutedEventArgs e)
     {
         Refresh();
     }
 
-    private void LineTapped(object? sender, TappedEventArgs e)
-    {
-        if (sender is Control { DataContext: UpcomingBusOnStop bus })
-        {
-            MainViewModel.SetGpsLine.Invoke(this,  bus.LineAndRoute);
-        }
-    }
+ 
     private void LinePointerReleased(object? sender, PointerReleasedEventArgs e)
     {
-        if (sender is Control { DataContext: UpcomingBusOnStop bus })
+        if (sender is Control  { DataContext: UpcomingBusOnStop bus } x)
         {
-            MainViewModel.SetGpsLine.Invoke(this,  bus.LineAndRoute);
+            x.ContextMenu.Open();
         }
     }
 
+
+    private void LineGPS(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: UpcomingBusOnStop bus } a)
+        {
+            MainViewModel.SetGpsLine.Invoke(this,  bus.LineAndRoute);
+        }
+    }
 }
 
 public class UpcomingBusOnStop

@@ -9,7 +9,6 @@ using Mapsui.Fetcher;
 using Mapsui.Layers;
 using Mapsui.Projections;
 using Mapsui.Providers;
-using Mapsui.Styles;
 using SMassTrans.Shared;
 
 namespace SMassTrans.Avalonia.Views;
@@ -24,6 +23,7 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
 
         s.DataRecieved += (x, y) =>
         {
+            #if DEBUG
             var activeBuses = y.Infos.Where(x => x.Status == "COURSE_LEAVE" || x.Status == "COURSE_EXECUTE" || x.Status == "WAIT_STOP").ToList();
             Debug.WriteLine(activeBuses.Count > 0
                 ? $"{y.Id} {activeBuses.Count}/{y.Infos.Count} buses going at avg {activeBuses.Select(x => x.Speed).Average()}km/h"
@@ -32,6 +32,7 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
             {
                 Debug.WriteLine($"{bus.Id} {bus.Status} {bus.Lat} {bus.Lon} {bus.Speed}km/h");
             }
+            #endif
             infos = y.Infos;
             DataHasChanged();
         };
@@ -73,25 +74,8 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
             p["StopId"] = x.StopId;
             p["RouteId"] = x.RouteId;
             p["CourseId"] = x.CourseId;
-
-            var calloutStyle = CreateCalloutStyle($"{x.Id} {x.Status} {x.Speed}km/h");
-            p.Styles.Add(calloutStyle);
             return p;
         }).Cast<IFeature>());
-    }
-    private static CalloutStyle CreateCalloutStyle(string content)
-    {
-        return new CalloutStyle
-        {
-            Title = content,
-            TitleFont = { FontFamily = null, Size = 30, Italic = false, Bold = true },
-            TitleFontColor = Color.White,
-            MaxWidth = 1000,
-            //RectRadius = 10,
-            //ShadowWidth = 4,
-            Enabled = true,
-            SymbolOffset = new Offset(0, SymbolStyle.DefaultHeight * 1f),
-        };
     }
     public void DataHasChanged()
     {

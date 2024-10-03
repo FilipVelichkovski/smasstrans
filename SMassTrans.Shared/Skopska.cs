@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json.Serialization;
+using SilverConfig;
 
 namespace SMassTrans.Shared;
 
@@ -37,11 +38,12 @@ public class Skopska : IClient<SkopskaStop, LineInfo>
         await PerformAuth();
         IsInitialised = true;
     }
-    FileBackedCache<List<SkopskaStop>> _stopsCache=new(TimeSpan.FromDays(20));
+    FileBackedCache<List<SkopskaStop>> _stopsCache=new(TimeSpan.FromDays(20),"stops");
     public async Task<List<SkopskaStop>> GetStops(bool ignoreCache = false)
     {
         if (_stopsCache.IsValid && !ignoreCache)
         {
+            Debug.WriteLine("Getting stops from cache");
             return _stopsCache.Value;
         }
         using var request = new HttpRequestMessage(HttpMethod.Get, stopsUrl);
@@ -52,32 +54,41 @@ public class Skopska : IClient<SkopskaStop, LineInfo>
         List<SkopskaStop> stops = [];
         await foreach (var s in enu)
         {
-            stops.Add(new SkopskaStop(s.id.ToString(), s.number.ToString(), s.name, s.lat, s.lon));
+            stops.Add(new SkopskaStop(s.id.ToString(), s.number, s.name, s.lat, s.lon));
         }
-
         _stopsCache.Value = stops;
         return _stopsCache.Value;
 
     }
-    Cache<Dictionary<LineRouteId, RouteInfo>>? RouteInfoCache;
-    TimeSpan AllowedCacheForRouteInfoCache = TimeSpan.FromHours(10);
+
+    public async Task<SkopskaStop> GetStop(string stopId)
+    {
+        var a= int.Parse(stopId);
+        if (!_stopsCache.IsValid)
+        {
+           await GetStops();
+        }
+
+       return _stopsCache.Value.First(x => x.StopId == a);
+    }
+    FileBackedCache<SerializableDictionary<LineRouteId, RouteInfo>>? RouteInfoCache=new(TimeSpan.FromHours(10),"routeInfo");
     public async Task<IEnumerable<RouteInfo>> GetAllRouteInfo()
     {
-        if (RouteInfoCache != null && DateTime.UtcNow < RouteInfoCache.Value.LastModified + AllowedCacheForRouteInfoCache)
+        if (RouteInfoCache is {IsValid:true})
         {
-            return RouteInfoCache.Value.Value.Values;
+            return RouteInfoCache.Value.Values;
         }
         await GetRoutes();
-        return RouteInfoCache.Value.Value.Values;
+        return RouteInfoCache.Value.Values;
     }
     public async Task<RouteInfo> GetRouteInfo(LineRouteId lineRouteId)
     {
-        if (RouteInfoCache != null && DateTime.UtcNow < RouteInfoCache.Value.LastModified + AllowedCacheForRouteInfoCache)
+        if (RouteInfoCache is {IsValid:true})
         {
-            return (RouteInfoCache.Value.Value[lineRouteId]);
+            return (RouteInfoCache.Value[lineRouteId]);
         }
         await GetRoutes();
-        return (RouteInfoCache.Value.Value[lineRouteId]);
+        return (RouteInfoCache.Value[lineRouteId]);
     }
     public async Task GetRoutes()
     {
@@ -86,33 +97,33 @@ public class Skopska : IClient<SkopskaStop, LineInfo>
         var response = await client.SendAsync(request);
         response.EnsureSuccessStatusCode();
         var enu = response.Content.ReadFromJsonAsAsyncEnumerable<RouteRoot>();
-        Dictionary<LineRouteId, RouteInfo> routeinfostuff = [];
+        SerializableDictionary<LineRouteId, RouteInfo> routeinfostuff = [];
         await foreach (var s in enu)
         {
             var key = new LineRouteId(s.lineId.ToString(), s.id.ToString());
-            routeinfostuff.Add(key, new RouteInfo(key, s.name, s.direction));
+      
+            routeinfostuff.Add(key, new RouteInfo(key, s.name, s.direction, s.stopIds.Select(x=>x.ToString("0000")).ToList()));
         }
-        RouteInfoCache = new(routeinfostuff,AllowedCacheForRouteInfoCache);
+        RouteInfoCache.Value=routeinfostuff;
     }
-    Cache<List<LineInfo>>? LineInfoCache;
-    TimeSpan AllowedCacheForLineInfoCache = TimeSpan.FromHours(10);
+    FileBackedCache<List<LineInfo>>? LineInfoCache=new(TimeSpan.FromHours(10),"lineInfo");
     public async Task<LineInfo> GetLineInfo(string lineId)
     {
-        if (LineInfoCache != null && DateTime.UtcNow < LineInfoCache.Value.LastModified + AllowedCacheForLineInfoCache)
+        if (LineInfoCache is { IsValid: true })
         {
-            return LineInfoCache.Value.Value.First(x => x.lineRouteIds.Any(x => x.LineId == lineId));
+            return LineInfoCache.Value.First(x => x.LineRouteIds.Any(x => x.LineId == lineId));
         }
         await GetLines();
-        return LineInfoCache.Value.Value.First(x => x.lineRouteIds.Any(x => x.LineId == lineId));
+        return LineInfoCache.Value.First(x => x.LineRouteIds.Any(x => x.LineId == lineId));
     }
       public async Task<LineInfo> GetLineInfo(LineRouteId lineId)
     {
-        if (LineInfoCache != null && DateTime.UtcNow < LineInfoCache.Value.LastModified + AllowedCacheForLineInfoCache)
+        if (LineInfoCache is { IsValid: true })
         {
-            return LineInfoCache.Value.Value.First(x => x.lineRouteIds.Contains(lineId));
+            return LineInfoCache.Value.First(x => x.LineRouteIds.Contains(lineId));
         }
         await GetLines();
-        return LineInfoCache.Value.Value.First(x => x.lineRouteIds.Contains(lineId));
+        return LineInfoCache.Value.First(x => x.LineRouteIds.Contains(lineId));
     }
     public async Task GetLines()
     {
@@ -127,7 +138,7 @@ public class Skopska : IClient<SkopskaStop, LineInfo>
             LineInfo l = new(s.RouteIds.Select(x => new LineRouteId(s.Id.ToString(), x.ToString())).ToArray(), s.Name, s.Name, s.Carrier, s.Nightly);
             la.Add(l);
         }
-        LineInfoCache = new(la,AllowedCacheForLineInfoCache);
+        LineInfoCache.Value =la;
     }
     public async Task GetAllStopLines()
     {
@@ -148,6 +159,11 @@ public class Skopska : IClient<SkopskaStop, LineInfo>
     {
        return GetStopLinesForStopId(stop.StopId.ToString("0000"));
     }
+    /// <summary>
+    /// Gets LIVE data for stop
+    /// </summary>
+    /// <param name="stopId">stop's id</param>
+    /// <returns>LIVE data for upcoming busses</returns>
     public async Task<IReadOnlyDictionary<LineRouteId, IReadOnlyList<int>>> GetStopLinesForStopId(string stopId)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, stoplinesUrl + "/" + stopId);

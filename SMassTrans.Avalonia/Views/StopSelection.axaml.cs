@@ -20,18 +20,10 @@ public partial class StopSelection : UserControl
     {
         InitializeComponent();
     }
-    private void StopTap(object? sender, TappedEventArgs e)
-    {
-        if ((MainViewModel)DataContext is not { } a || sender is not StackPanel panel ||
-            panel.DataContext is not IStop stop) return;
-        a.PrevStopContent = a.StopContent;
-        a.StopContent = new StopInfo(stop, a.client);
-    }
 
     private void InputElement_OnPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
-        if ((MainViewModel)DataContext is not { } a || sender is not StackPanel panel ||
-            panel.DataContext is not IStop stop) return;
+        if (DataContext is not MainViewModel a || sender is not StackPanel { DataContext: IStop stop }) return;
         a.PrevStopContent = a.StopContent;
         a.StopContent = new StopInfo(stop, a.client);
     }
