@@ -16,23 +16,23 @@ cache:
 build-desktop:
   stage: build
   script:
-    - 'cd smasstrans/SMassTrans.Avalonia.Desktop/'
+    - 'cd SMassTrans.Avalonia.Desktop/'
     - 'dotnet workload restore --project SMassTrans.Avalonia.Desktop.csproj --packages $NUGET_PACKAGES_DIRECTORY'
     - 'dotnet restore --force --packages $NUGET_PACKAGES_DIRECTORY'
     - 'dotnet publish -c Release -f net8.0 --no-restore'
   artifacts:
     expire_in: 1 week  
     paths:
-      - 'smasstrans/SMassTrans.Avalonia.Desktop/bin/Release/net8.0/publish'
+      - 'SMassTrans.Avalonia.Desktop/bin/Release/net8.0/publish'
 
 build-mobile:
   stage: build
   script:
-    - 'cd smasstrans/SMassTrans.Avalonia.Android/'
+    - 'cd SMassTrans.Avalonia.Android/'
     - 'dotnet workload restore --project SMassTrans.Avalonia.Android.csproj--packages $NUGET_PACKAGES_DIRECTORY'
     - 'dotnet restore --force --packages $NUGET_PACKAGES_DIRECTORY'
     - 'dotnet publish -c Release -p:ExtraDefineConstants="gitlabci" -p:AndroidSdkDirectory=/usr/lib/android-sdk/ -p:JavaSdkDirectory=/usr/lib/jvm/java-17-openjdk-amd64/ -f net8.0-android --no-restore'
   artifacts:
     expire_in: 1 week
     paths:
-      - 'smasstrans/SMassTrans.Avalonia.Android/bin/Release/net8.0-android/publish/*'
+      - 'SMassTrans.Avalonia.Android/bin/Release/net8.0-android/publish/*'
