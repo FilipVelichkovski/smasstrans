@@ -1,0 +1,38 @@
+image: registry.gitlab.com/silvercraft/dotnet-android-build-image:latest
+
+variables:
+  OBJECTS_DIRECTORY: 'obj'
+  NUGET_PACKAGES_DIRECTORY: '.nuget'
+  SOURCE_CODE_PATH: '*/*/'
+  GIT_SUBMODULE_STRATEGY: recursive
+cache:
+  key: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
+  paths:
+    - '$SOURCE_CODE_PATH$OBJECTS_DIRECTORY/project.assets.json'
+    - '$SOURCE_CODE_PATH$OBJECTS_DIRECTORY/*.csproj.nuget.*'
+    - '$NUGET_PACKAGES_DIRECTORY'
+  policy: pull-push
+
+build-desktop:
+  stage: build
+  script:
+    - 'cd smasstrans/SMassTrans.Avalonia.Desktop/'
+    - 'dotnet workload restore --project SMassTrans.Avalonia.Desktop.csproj --packages $NUGET_PACKAGES_DIRECTORY'
+    - 'dotnet restore --force --packages $NUGET_PACKAGES_DIRECTORY'
+    - 'dotnet publish -c Release -f net8.0 --no-restore'
+  artifacts:
+    expire_in: 1 week  
+    paths:
+      - 'smasstrans/SMassTrans.Avalonia.Desktop/bin/Release/net8.0/publish'
+
+build-mobile:
+  stage: build
+  script:
+    - 'cd smasstrans/SMassTrans.Avalonia.Android/'
+    - 'dotnet workload restore --project SMassTrans.Avalonia.Android.csproj--packages $NUGET_PACKAGES_DIRECTORY'
+    - 'dotnet restore --force --packages $NUGET_PACKAGES_DIRECTORY'
+    - 'dotnet publish -c Release -p:ExtraDefineConstants="gitlabci" -p:AndroidSdkDirectory=/usr/lib/android-sdk/ -p:JavaSdkDirectory=/usr/lib/jvm/java-17-openjdk-amd64/ -f net8.0-android --no-restore'
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - 'smasstrans/SMassTrans.Avalonia.Android/bin/Release/net8.0-android/publish/*'
