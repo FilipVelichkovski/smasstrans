@@ -7,9 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="SilverCraft.SilverConfig">
-      <HintPath>..\..\..\..\..\home\silver\.nuget\packages\silvercraft.silverconfig\1.0.3\lib\net6.0\SilverCraft.SilverConfig.dll</HintPath>
-    </Reference>
+    <PackageReference Include="SilverCraft.SilverConfig" Version="1.0.3" />
   </ItemGroup>
 
 </Project>
