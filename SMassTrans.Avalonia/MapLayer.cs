@@ -3,9 +3,7 @@ using BruTile.Cache;
 using BruTile.Predefined;
 using BruTile.Web;
 using Mapsui.Tiling.Layers;
-using BruTile.MbTiles;
 using System.IO;
-using SQLite;
 using System;
 namespace SMassTrans.Avalonia;
 
