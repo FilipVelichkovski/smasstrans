@@ -5,12 +5,14 @@
         <OutputType>Exe</OutputType>
         <Nullable>enable</Nullable>
         <ApplicationId>silvercraft.SMassTrans.Avalonia</ApplicationId>
-        <ApplicationVersion>18</ApplicationVersion>
-        <ApplicationDisplayVersion>18.0</ApplicationDisplayVersion>
+        <ApplicationVersion>19</ApplicationVersion>
+        <ApplicationDisplayVersion>19.0</ApplicationDisplayVersion>
         <AndroidPackageFormat>apk</AndroidPackageFormat>
-        <AndroidEnableProfiledAot>False</AndroidEnableProfiledAot>
+        <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
         <UseMaui>true</UseMaui>
         <Configurations>Debug;Release</Configurations>
+        <RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
+        <AndroidCreatePackagePerAbi>true</AndroidCreatePackagePerAbi>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(OS)' != 'Windows_NT' ">
         <JavaSdkDirectory>/usr/lib/jvm/java-17-openjdk/</JavaSdkDirectory>
@@ -24,25 +26,6 @@
     </ItemGroup>
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
         <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
-        <RunAOTCompilation>true</RunAOTCompilation>
-        <RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
-        <PlatformTarget>AnyCPU</PlatformTarget>
-        <AndroidUseSharedRuntime>true</AndroidUseSharedRuntime>
-        <AndroidCreatePackagePerAbi>true</AndroidCreatePackagePerAbi>
-        <AndroidSupportedAbis>armeabi-v7a;arm64-v8a;x86_64</AndroidSupportedAbis>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-        <WarningLevel>9999</WarningLevel>
-        <RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
-        <PlatformTarget>AnyCPU</PlatformTarget>
-        <AndroidUseSharedRuntime>true</AndroidUseSharedRuntime>
-        <AndroidCreatePackagePerAbi>true</AndroidCreatePackagePerAbi>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-        <WarningLevel>9999</WarningLevel>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='WATCH|AnyCPU'">
-        <WarningLevel>9999</WarningLevel>
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Avalonia.Android" Version="11.1.3" />
