@@ -4,11 +4,14 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Collections;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Platform;
 using Avalonia.Threading;
 using Mapsui;
 using Mapsui.Extensions;
@@ -54,6 +57,28 @@ public partial class MainView : UserControl
         mapControl.Map.Info += OnMapInfo;
         MainViewModel.SetGpsLine += SetGpsLine;
         Refresh();
+        if (Application.Current.TryGetFeature<IActivatableLifetime>() is { } activatableLifetime)
+        {
+            activatableLifetime.Activated += (sender, args) =>
+            {
+                if (args.Kind == ActivationKind.Background)
+                {
+                    Debug.WriteLine($"App exited background");
+                    if (Equals(TabCtl.SelectedContent, mapTabGrid))
+                    {
+                        StartMap();
+                    }
+                }
+            };
+            activatableLifetime.Deactivated += (sender, args) =>
+            {
+                if (args.Kind == ActivationKind.Background)
+                {
+                    Debug.WriteLine($"App entered background");
+                    StopMap();
+                }
+            };
+        }
     }
 
     private MPoint Bitpazar = SphericalMercator.FromLonLat(21.439978, 42.000939).ToMPoint();
@@ -163,34 +188,42 @@ public partial class MainView : UserControl
 
         if (Equals(TabCtl.SelectedContent, mapTabGrid))
         {
-            BusPointProvider = new BusPointProvider(GpsLine);
-            layer = new AnimatedPointLayer(BusPointProvider)
-            {
-                Name = "Buses",
-                Style = new LabelStyle
-                {
-                    BackColor = new Brush(Color.Red),
-                    ForeColor = Color.White,
-                    Text = "Bus",
-                },
-                IsMapInfoLayer = true
-            };
-            mapControl.Map?.Layers.Add(layer);
+            StartMap();
         }
         else
         {
-            if (layer != null)
-            {
-                mapControl.Map?.Layers.Remove(layer);
-                layer.Dispose();
-                layer = null;
-                BusPointProvider.Dispose();
-                BusPointProvider = null;
-            }
+            StopMap();
         }
         e.Handled = true;
     }
 
+    void StartMap()
+    {
+        BusPointProvider = new BusPointProvider(GpsLine);
+        layer = new AnimatedPointLayer(BusPointProvider)
+        {
+            Name = "Buses",
+            Style = new LabelStyle
+            {
+                BackColor = new Brush(Color.Red),
+                ForeColor = Color.White,
+                Text = "Bus",
+            },
+            IsMapInfoLayer = true
+        };
+        mapControl.Map?.Layers.Add(layer); 
+    }
+    void StopMap()
+    {
+        if (layer != null)
+        {
+            mapControl.Map?.Layers.Remove(layer);
+        }
+        layer?.Dispose();
+        layer = null;
+        BusPointProvider.Dispose();
+        BusPointProvider = null;
+    }
    
 
     private void CopyStops(object? sender, RoutedEventArgs e)
