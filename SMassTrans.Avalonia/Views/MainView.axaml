@@ -58,13 +58,11 @@
                 </ListBox>
             </TabItem>
             <TabItem Header="{Binding MapName}" Name="MapTabItem">
-              
-                
+              <Grid RowDefinitions="9*,1*,1*" Name="mapTabGrid">
+                  <TextBlock Grid.Row="1" Name="mapdata" TextWrapping="Wrap"></TextBlock>
+                  <Button Grid.Row="2" Click="GPSButton_OnClick">GPS on map</Button>
+              </Grid>
             </TabItem>
         </TabControl>
-        <StackPanel Grid.Row="1" Orientation="Horizontal">
-            <Button Click="Bitpazar_OnClick">Show bitpazar on map</Button>
-            <Button Click="GPSButton_OnClick"> GPS on map</Button>
-        </StackPanel>
     </Grid>
 </UserControl>

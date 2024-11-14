@@ -32,25 +32,15 @@ public partial class MainView : UserControl
     bool Inited = false;
     Mapsui.UI.Avalonia.MapControl mapControl;
     private BusPointProvider BusPointProvider;
-    private TextBlock mapdata;
-    private Grid mapTabGrid;
     public MainView()
     {
         DataContext = model;
         InitializeComponent();
         TabCtl = this.FindControl<TabControl>("TabCtl");
-        mapTabGrid = new Grid();
-        mapTabGrid.RowDefinitions.Add(new RowDefinition() { Height = new GridLength(9, GridUnitType.Star) });
-        mapTabGrid.RowDefinitions.Add(new RowDefinition() { Height = new GridLength(1, GridUnitType.Star) });
+        mapTabGrid = this.FindControl<Grid>("mapTabGrid");
         client = new Skopska(new());
         model.client = client;
-        mapdata = new();
-        mapdata.TextWrapping = TextWrapping.Wrap;
-        MapTabItem.Content = mapTabGrid;
-        mapTabGrid.Children.Add(mapdata);
-        Grid.SetRow(mapdata, 1);
-
-      
+        mapdata = this.FindControl<TextBlock>("mapdata");
         MainViewModel.SetGpsLine += SetGpsLine;
         Refresh();
         if (Application.Current.TryGetFeature<IActivatableLifetime>() is { } activatableLifetime)
@@ -167,11 +157,6 @@ public partial class MainView : UserControl
         });
     }
 
-    private void Bitpazar_OnClick(object? sender, RoutedEventArgs e)
-    {
-        mapControl.Map.Navigator.CenterOnAndZoomTo(Bitpazar, mapControl.Map.Navigator.Resolutions[18]);
-    }
-
     private AnimatedPointLayer layer;
     public static string GpsLine = "1126";
     private void SelectingItemsControl_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -196,10 +181,23 @@ public partial class MainView : UserControl
 
     void StartMap()
     {
+        if (MapEn) return;
+
         mapControl = new();
+        mapControl.Initialized += (sender, args) =>
+        {
+            mapControl.Map?.Layers.Add(OpenStreetMap.CreateTileLayer());
+            try
+            {
+                mapControl.Map?.Navigator.CenterOnAndZoomTo(Bitpazar, mapControl.Map.Navigator.Resolutions[18]);
+
+            }
+            catch (Exception e)
+            {
+            }
+        };
         mapTabGrid.Children.Add(mapControl);
-        mapControl.Map?.Layers.Add(OpenStreetMap.CreateTileLayer());
-        mapControl.Map?.Navigator.CenterOnAndZoomTo(Bitpazar, mapControl.Map.Navigator.Resolutions[18]);
+        
         mapControl.Map.Info += OnMapInfo;
         BusPointProvider = new BusPointProvider(GpsLine);
         layer = new AnimatedPointLayer(BusPointProvider)
@@ -214,9 +212,11 @@ public partial class MainView : UserControl
             IsMapInfoLayer = true
         };
         mapControl.Map?.Layers.Add(layer); 
+        MapEn = true;  
     }
     void StopMap()
     {
+        if (!MapEn) return;
         if (layer != null)
         {
             mapControl.Map?.Layers.Remove(layer);
@@ -226,11 +226,12 @@ public partial class MainView : UserControl
         BusPointProvider?.Dispose();
         BusPointProvider = null;
         mapTabGrid.Children.Remove(mapControl);
-        mapControl.Dispose();
+        mapControl?.Dispose();
         mapControl = null;
+        MapEn = false;  
     }
 
-   
+    private bool MapEn = false;
 
     private void CopyStops(object? sender, RoutedEventArgs e)
     {

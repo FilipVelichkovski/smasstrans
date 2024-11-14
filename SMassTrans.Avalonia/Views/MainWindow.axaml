@@ -6,7 +6,7 @@
         xmlns:views="clr-namespace:SMassTrans.Avalonia.Views"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="SMassTrans.Avalonia.Views.MainWindow"
-        Icon="/Assets/avalonia-logo.ico"
+        Icon="/Assets/Icon.png"
         Title="SMassTrans.Avalonia">
         <views:MainView />
 </Window>
