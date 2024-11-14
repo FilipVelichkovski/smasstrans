@@ -4,19 +4,20 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Collections;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Platform;
 using Avalonia.Threading;
 using Mapsui;
 using Mapsui.Extensions;
 using Mapsui.Layers.AnimatedLayers;
 using Mapsui.Projections;
 using Mapsui.Styles;
-using Mapsui.Widgets;
-using Mapsui.Widgets.BoxWidgets;
 using SMassTrans.Avalonia.ViewModels;
 using SMassTrans.Shared;
 using Brush = Mapsui.Styles.Brush;
@@ -29,7 +30,7 @@ public partial class MainView : UserControl
     private MainViewModel model = new();
     public static Skopska client;
     bool Inited = false;
-    Mapsui.UI.Avalonia.MapControl mapControl = new Mapsui.UI.Avalonia.MapControl();
+    Mapsui.UI.Avalonia.MapControl mapControl;
     private BusPointProvider BusPointProvider;
     private TextBlock mapdata;
     private Grid mapTabGrid;
@@ -43,18 +44,39 @@ public partial class MainView : UserControl
         mapTabGrid.RowDefinitions.Add(new RowDefinition() { Height = new GridLength(1, GridUnitType.Star) });
         client = new Skopska(new());
         model.client = client;
-        mapControl.Map?.Layers.Add(OpenStreetMap.CreateTileLayer());
         mapdata = new();
         mapdata.TextWrapping = TextWrapping.Wrap;
         MapTabItem.Content = mapTabGrid;
-        mapTabGrid.Children.Add(mapControl);
         mapTabGrid.Children.Add(mapdata);
         Grid.SetRow(mapdata, 1);
-        mapControl.Map.Navigator.CenterOnAndZoomTo(Bitpazar, mapControl.Map.Navigator.Resolutions[18]);
-        mapControl.Map.Info += OnMapInfo;
+
+      
         MainViewModel.SetGpsLine += SetGpsLine;
         Refresh();
+        if (Application.Current.TryGetFeature<IActivatableLifetime>() is { } activatableLifetime)
+        {
+            activatableLifetime.Activated += (sender, args) =>
+            {
+                if (args.Kind == ActivationKind.Background)
+                {
+                    Debug.WriteLine($"App exited background");
+                    if (Equals(TabCtl.SelectedContent, mapTabGrid))
+                    {
+                        StartMap();
+                    }
+                }
+            };
+            activatableLifetime.Deactivated += (sender, args) =>
+            {
+                if (args.Kind == ActivationKind.Background)
+                {
+                    Debug.WriteLine($"App entered background");
+                    StopMap();
+                }
+            };
+        }
     }
+    
 
     private MPoint Bitpazar = SphericalMercator.FromLonLat(21.439978, 42.000939).ToMPoint();
 
@@ -163,32 +185,49 @@ public partial class MainView : UserControl
 
         if (Equals(TabCtl.SelectedContent, mapTabGrid))
         {
-            BusPointProvider = new BusPointProvider(GpsLine);
-            layer = new AnimatedPointLayer(BusPointProvider)
-            {
-                Name = "Buses",
-                Style = new LabelStyle
-                {
-                    BackColor = new Brush(Color.Red),
-                    ForeColor = Color.White,
-                    Text = "Bus",
-                },
-                IsMapInfoLayer = true
-            };
-            mapControl.Map?.Layers.Add(layer);
+            StartMap();
         }
         else
         {
-            if (layer != null)
-            {
-                mapControl.Map?.Layers.Remove(layer);
-                layer.Dispose();
-                layer = null;
-                BusPointProvider.Dispose();
-                BusPointProvider = null;
-            }
+            StopMap();
         }
         e.Handled = true;
+    }
+
+    void StartMap()
+    {
+        mapControl = new();
+        mapTabGrid.Children.Add(mapControl);
+        mapControl.Map?.Layers.Add(OpenStreetMap.CreateTileLayer());
+        mapControl.Map?.Navigator.CenterOnAndZoomTo(Bitpazar, mapControl.Map.Navigator.Resolutions[18]);
+        mapControl.Map.Info += OnMapInfo;
+        BusPointProvider = new BusPointProvider(GpsLine);
+        layer = new AnimatedPointLayer(BusPointProvider)
+        {
+            Name = "Buses",
+            Style = new LabelStyle
+            {
+                BackColor = new Brush(Color.Red),
+                ForeColor = Color.White,
+                Text = "Bus",
+            },
+            IsMapInfoLayer = true
+        };
+        mapControl.Map?.Layers.Add(layer); 
+    }
+    void StopMap()
+    {
+        if (layer != null)
+        {
+            mapControl.Map?.Layers.Remove(layer);
+        }
+        layer?.Dispose();
+        layer = null;
+        BusPointProvider?.Dispose();
+        BusPointProvider = null;
+        mapTabGrid.Children.Remove(mapControl);
+        mapControl.Dispose();
+        mapControl = null;
     }
 
    

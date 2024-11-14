@@ -19,6 +19,16 @@ public partial class StopInfo : UserControl
     private readonly EventHandler<LineRouteId> _gpsLine;
     private bool GPS = false;
     private Skopska _client;
+    /// <summary>
+    /// DO NOT USE THIS METHOD
+    /// </summary>
+    public StopInfo()
+    {
+        // See: https://github.com/AvaloniaUI/Avalonia/issues/11312
+    }
+    /// <summary>
+    /// Creates new stopinfo
+    /// </summary>
     public StopInfo(IStop stop, Skopska client, bool gps = false)
     {
         GPS = gps;
