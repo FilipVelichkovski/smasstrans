@@ -13,12 +13,14 @@ using SMassTrans.Shared;
 
 namespace SMassTrans.Avalonia.Views;
 
+
 public partial class StopInfo : UserControl
 {
     private IStop _stop;
     private readonly EventHandler<LineRouteId> _gpsLine;
-    private bool GPS = false;
+    private Tab bsource;
     private Skopska _client;
+    private MainViewModel _mainViewModel;
     /// <summary>
     /// DO NOT USE THIS METHOD
     /// </summary>
@@ -29,12 +31,14 @@ public partial class StopInfo : UserControl
     /// <summary>
     /// Creates new stopinfo
     /// </summary>
-    public StopInfo(IStop stop, Skopska client, bool gps = false)
+    public StopInfo(IStop stop, MainViewModel mainViewModel, Tab source)
     {
-        GPS = gps;
         InitializeComponent();
+        bsource = source;
         _stop = stop;
-        _client = client;
+        _mainViewModel = mainViewModel;
+        _client=mainViewModel.client;
+        DataContext = new StopInfoModel();
         Refresh();
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel is not null)
@@ -52,7 +56,7 @@ public partial class StopInfo : UserControl
             upcomingBuses.Sort((x,y)=>DateTime.Compare( x.Time, y.Time));
             Dispatcher.UIThread.Invoke(() =>
             {
-                if (DataContext is MainViewModel a )
+                if (DataContext is StopInfoModel a )
                 {
                     a.BusesOnStop = new(upcomingBuses);
                 }
@@ -63,16 +67,10 @@ public partial class StopInfo : UserControl
   
     private void BackRequested(object? sender, RoutedEventArgs e)
     {
-        if (DataContext is not MainViewModel a) return;
+        
         e.Handled = true;
-        if (GPS)
-        {
-            a.StopGPSContent = a.PrevStopGPSContent;
-        }
-        else
-        {
-            a.StopContent = a.PrevStopContent;
-        }
+        _mainViewModel.GoBack(bsource);
+
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel is not null)
         {
@@ -102,6 +100,7 @@ public partial class StopInfo : UserControl
     }
 
 
+ 
     private void LineGPS(object? sender, RoutedEventArgs e)
     {
         if (sender is Control { DataContext: UpcomingBusOnStop bus } a)
@@ -109,6 +108,24 @@ public partial class StopInfo : UserControl
             MainViewModel.SetGpsLine.Invoke(this,  bus.LineAndRoute);
         }
     }
+    private void ViewStops(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: UpcomingBusOnStop bus } a)
+        {
+           
+            var stops =  _mainViewModel.client.GetRouteInfo(bus.LineAndRoute).GetAwaiter().GetResult().StopIds
+                .Select(x => _mainViewModel.client.GetStop(x).GetAwaiter().GetResult()).ToList();
+            var newpage=new StopSelectionLine(_mainViewModel, bsource)
+            {
+                DataContext = new StopSelectionLineModel()
+                {
+                    LinePageStops = stops,
+                }
+            };
+            _mainViewModel.GoForward(bsource, newpage);
+        }
+    }
+
 }
 
 public class UpcomingBusOnStop

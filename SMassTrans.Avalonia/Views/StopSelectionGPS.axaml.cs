@@ -18,15 +18,13 @@ public partial class StopSelectionGPS : UserControl
     private void StopTap(object? sender, TappedEventArgs e)
     {
         if (DataContext is not MainViewModel a || sender is not StackPanel { DataContext: IStop stop }) return;
-        a.PrevStopGPSContent = a.StopGPSContent;
-        a.StopGPSContent = new StopInfo(stop,a.client, true);
+        a.GoForward(Tab.StopGPS,  new StopInfo(stop,a, Tab.StopGPS));
     }
 
     private void InputElement_OnPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
         if (DataContext is not MainViewModel a || sender is not StackPanel { DataContext: IStop stop }) return;
-        a.PrevStopGPSContent = a.StopGPSContent;
-        a.StopGPSContent = new StopInfo(stop,a.client,true);
+        a.GoForward(Tab.StopGPS,  new StopInfo(stop,a, Tab.StopGPS));
     }
 
     private void TextBox_OnTextChanged(object? sender, TextChangedEventArgs e)

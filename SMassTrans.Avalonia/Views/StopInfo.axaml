@@ -6,7 +6,7 @@
              xmlns:views="clr-namespace:SMassTrans.Avalonia.Views"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SMassTrans.Avalonia.Views.StopInfo"
-             x:DataType="viewModels:MainViewModel">
+             x:DataType="viewModels:StopInfoModel">
     <UserControl.Resources>
         <views:LineRouteIdConverter x:Key="lineRouteIdConverter"/>
     </UserControl.Resources>
@@ -32,6 +32,8 @@
                             <StackPanel.ContextMenu>
                                 <ContextMenu>
                                     <MenuItem Header="Show line in GPS" Click="LineGPS"/>
+                                    <MenuItem Header="View stops" Click="ViewStops"/>
+
                                 </ContextMenu>
                             </StackPanel.ContextMenu>
                             <TextBlock Text="{Binding LineAndRoute, Converter={StaticResource lineRouteIdConverter}}" Margin="5,5,10,5" />
@@ -40,12 +42,10 @@
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
-            
         </RefreshContainer>
-        <StackPanel Grid.Row="1" Orientation="Horizontal">
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Click="RefreshRequested">Refresh</Button>
             <Button Click="BackRequested">Back</Button>
         </StackPanel>
-        
     </Grid>
 </UserControl>

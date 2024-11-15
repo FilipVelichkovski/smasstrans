@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Avalonia.Collections;
 using Avalonia.Controls;
 using ReactiveUI;
@@ -6,7 +7,12 @@ using SMassTrans.Avalonia.Views;
 using SMassTrans.Shared;
 
 namespace SMassTrans.Avalonia.ViewModels;
-
+public enum Tab
+{
+    Stop,
+    StopGPS,
+    Line
+}
 public class MainViewModel : ViewModelBase
 {
     public Skopska client;
@@ -26,26 +32,57 @@ public class MainViewModel : ViewModelBase
         get=>_stopContent;
         set => this.RaiseAndSetIfChanged(ref _stopContent, value);
     }
-    private Control? _prevStopContent;
-    public Control? PrevStopContent{
-        get=>_prevStopContent;
-        set => this.RaiseAndSetIfChanged(ref _prevStopContent, value);
-    }
+    public Stack<Control> PrevStopContent=new();
+    
     private Control _stopGPSContent = new StopSelectionGPS();
     public Control StopGPSContent{
         get=>_stopGPSContent;
         set => this.RaiseAndSetIfChanged(ref _stopGPSContent, value);
     }
-    private Control? _prevStopGPSContent;
-    public Control? PrevStopGPSContent{
-        get=>_prevStopGPSContent;
-        set => this.RaiseAndSetIfChanged(ref _prevStopGPSContent, value);
+    public Stack<Control> PrevStopGPSContent=new();
+
+    private Control? _linePage = new LineView();
+    public Control LinePage{
+        get=>_linePage;
+        set => this.RaiseAndSetIfChanged(ref _linePage, value);
     }
-    private AvaloniaList<UpcomingBusOnStop> _busesOnStop = new();
-    public AvaloniaList<UpcomingBusOnStop> BusesOnStop{
-        get=>_busesOnStop;
-        set => this.RaiseAndSetIfChanged(ref _busesOnStop, value);
+
+    public void GoBack(Tab tab)
+    {
+        switch (tab)
+        {
+            case Tab.Stop:
+                StopContent = PrevStopContent.Pop();
+                break;
+            case Tab.StopGPS:
+                StopGPSContent = PrevStopGPSContent.Pop();
+                break;
+            case Tab.Line:
+                LinePage = PrevLinePages.Pop();
+                break;
+        }
     }
+    public void GoForward(Tab tab, Control next)
+    {
+        switch (tab)
+        {
+            case Tab.Stop:
+                PrevStopContent.Push( StopContent );
+                StopContent=next;
+                break;
+            case Tab.StopGPS:
+                PrevStopGPSContent.Push( StopGPSContent );
+                StopGPSContent=next;
+                break;
+            case Tab.Line:
+                PrevLinePages.Push( LinePage);
+                LinePage=next;
+                break;
+        }
+    }
+    
+    public Stack<Control> PrevLinePages=new();
+
       private string _mapName = "Map";
     public string MapName{
         get=>_mapName;

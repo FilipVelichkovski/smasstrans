@@ -1,12 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using Avalonia;
 using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Markup.Xaml;
 using SMassTrans.Avalonia.ViewModels;
 using SMassTrans.Shared;
 
@@ -14,7 +9,6 @@ namespace SMassTrans.Avalonia.Views;
 
 public partial class StopSelection : UserControl
 {
-   
 
     public StopSelection()
     {
@@ -24,8 +18,7 @@ public partial class StopSelection : UserControl
     private void InputElement_OnPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
         if (DataContext is not MainViewModel a || sender is not StackPanel { DataContext: IStop stop }) return;
-        a.PrevStopContent = a.StopContent;
-        a.StopContent = new StopInfo(stop, a.client);
+        a.GoForward(Tab.Stop,  new StopInfo(stop, a, Tab.Stop));
     }
 
     private void TextBox_OnTextChanged(object? sender, TextChangedEventArgs e)

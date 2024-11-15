@@ -30,32 +30,8 @@
             </TabItem>
             <TabItem Header="Stops (GPS)" Content="{Binding StopGPSContent}" > 
             </TabItem>
-            <TabItem Header="Lines" >
-                <ListBox Name="LineBox" Margin="0" Padding="0" ItemsSource="{Binding Lines}">
-                    <ListBox.Styles>
-                        <Style Selector="ListBoxItem">
-                            <Setter Property="Padding" Value="0" />
-                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                        </Style>
-                    </ListBox.Styles>
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <Border BorderThickness="1" BorderBrush="{DynamicResource ForegroundBrush}"  >
-                            <StackPanel Margin="2" Orientation="Horizontal" Tapped ="LineDoubleTapped" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                                <StackPanel.ContextMenu>
-                                    <ContextMenu>
-                                    <MenuItem Header="GPS" Click="LineGPS"/>
-                                    <MenuItem Header="COPY STOPS" Click="CopyStops"/>
-                                    </ContextMenu>
-                                </StackPanel.ContextMenu>
-                                <TextBlock Text="{Binding LineRouteId, Converter={StaticResource lineRouteIdConverter}}" Padding="0,10,5,0" />
-                                <TextBlock Text="{Binding Name}" Padding="0,10,5,0" />
-                                <TextBlock Text="{Binding Direction}" Padding="0,10,5,0" />
-                            </StackPanel>
-                                </Border>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
+            <TabItem Header="Lines" Content="{Binding LinePage}" >
+                
             </TabItem>
             <TabItem Header="{Binding MapName}" Name="MapTabItem">
               <Grid RowDefinitions="9*,1*,1*" Name="mapTabGrid">

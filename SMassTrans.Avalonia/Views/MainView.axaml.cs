@@ -108,26 +108,12 @@ public partial class MainView : UserControl
         GpsLine = info.LineRouteId.RouteId;
         model.MapName=$"Map ({info.Name.Trim()})";
     }
-    private void LineGPS(object? sender, RoutedEventArgs e)
-    {
-        if (sender is Control { DataContext: IRouteInfo context })
-        {
-            SetGpsLine(context);
-        }
-    }
+ 
     private void MapControl_Navigator_ViewportChanged(object? sender, PropertyChangedEventArgs e)
     {
         Debug.WriteLine($"{mapControl.Map.Navigator.Viewport.CenterX}  {mapControl.Map.Navigator.Viewport.CenterY} {mapControl.Map.Navigator.Viewport.Resolution}");
     }
 
-    private void LineDoubleTapped(object? sender, TappedEventArgs e)
-    {
-        if (sender is Control { DataContext: IRouteInfo context } a)
-        {
-            a.ContextMenu.Open();
-           
-        }
-    }
 
 
     void Refresh()
@@ -189,8 +175,14 @@ public partial class MainView : UserControl
             mapControl.Map?.Layers.Add(OpenStreetMap.CreateTileLayer());
             try
             {
-                mapControl.Map?.Navigator.CenterOnAndZoomTo(Bitpazar, mapControl.Map.Navigator.Resolutions[18]);
-
+                if (CenterX is { } x && CenterY is { } y)
+                {
+                    mapControl.Map?.Navigator.CenterOnAndZoomTo(new MPoint(x, y), Resolution??18);
+                }
+                else
+                {
+                    mapControl.Map?.Navigator.CenterOnAndZoomTo(Bitpazar, mapControl.Map.Navigator.Resolutions[18]);
+                }
             }
             catch (Exception e)
             {
@@ -225,29 +217,22 @@ public partial class MainView : UserControl
         layer = null;
         BusPointProvider?.Dispose();
         BusPointProvider = null;
+        
         mapTabGrid.Children.Remove(mapControl);
+        if (mapControl != null)
+        {
+            CenterX = mapControl.Map?.Navigator.Viewport.CenterX;
+            CenterY = mapControl.Map?.Navigator.Viewport.CenterY;
+            Resolution = mapControl.Map?.Navigator.Viewport.Resolution;
+        }
         mapControl?.Dispose();
         mapControl = null;
         MapEn = false;  
     }
 
+    private double? CenterX=null, CenterY=null,Resolution=null;
     private bool MapEn = false;
 
-    private void CopyStops(object? sender, RoutedEventArgs e)
-    {
-        if (sender is not Control { DataContext: IRouteInfo context }) return;
-        var topLevel = TopLevel.GetTopLevel(this);
-        StringBuilder s = new();
-        s.AppendLine($"{context.Name}: ");
-        if (context is RouteInfo routeInfo)
-        {
-            foreach (var stop in routeInfo.StopIds)
-            {
-                s.AppendLine($"{model.client.GetStop(stop).GetAwaiter().GetResult().StopName}");
-            }
-        }
-        topLevel.Clipboard.SetTextAsync(s.ToString());
-    }
 
 
     private async void GPSButton_OnClick(object? sender, RoutedEventArgs e)
