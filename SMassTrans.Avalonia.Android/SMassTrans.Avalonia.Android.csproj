@@ -18,7 +18,13 @@
         <JavaSdkDirectory>/usr/lib/jvm/java-17-openjdk/</JavaSdkDirectory>
         <AndroidSdkDirectory>/opt/android-sdk</AndroidSdkDirectory>
     </PropertyGroup>
-
+    <PropertyGroup Condition="$(DefineConstants.Contains('gitlabci'))">
+        <AndroidKeyStore>True</AndroidKeyStore>
+        <AndroidSigningKeyStore>$(ANDROID_KEY_STOREFILE)</AndroidSigningKeyStore>
+        <AndroidSigningStorePass>$(ANDROID_KEYSTORE_PASSWORD)</AndroidSigningStorePass>
+        <AndroidSigningKeyAlias>$(ANDROID_KEY_ALIAS)</AndroidSigningKeyAlias>
+        <AndroidSigningKeyPass>$(ANDROID_KEYSTORE_PASSWORD)</AndroidSigningKeyPass>
+    </PropertyGroup>
     <ItemGroup>
         <AndroidResource Include="Icon.png">
             <Link>Resources\drawable\Icon.png</Link>
