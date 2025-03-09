@@ -16,6 +16,7 @@ cache:
 build-desktop:
   stage: build
   script:
+    - 'sudo apt install libfuse2'
     - 'cd SMassTrans.Avalonia.Desktop/'
     - 'dotnet workload restore --project SMassTrans.Avalonia.Desktop.csproj --packages $NUGET_PACKAGES_DIRECTORY'
     - 'dotnet restore --force --packages $NUGET_PACKAGES_DIRECTORY'
