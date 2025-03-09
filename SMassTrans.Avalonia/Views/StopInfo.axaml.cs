@@ -149,10 +149,7 @@ public class LineRouteIdConverter : IValueConverter
         if (value is LineRouteId linerouteID  
                                        && targetType.IsAssignableTo(typeof(string)))
         {
-           var res= Task.Run(async () =>
-            {
-                return await MainView.client.GetLineInfo(linerouteID);
-            }).GetAwaiter().GetResult();
+           var res= Task.Run(async () => await MainView.client.GetLineInfo(linerouteID)).GetAwaiter().GetResult();
             return res.Name;
         }
         return new BindingNotification(new InvalidCastException(), 

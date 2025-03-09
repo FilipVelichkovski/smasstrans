@@ -9,7 +9,9 @@
     <UserControl.Resources>
         <views:LineRouteIdConverter x:Key="lineRouteIdConverter"/>
     </UserControl.Resources>
-    <ListBox Name="LineBox" Margin="0" Padding="0" ItemsSource="{Binding Lines}" x:DataType="viewModels:MainViewModel">
+    <Grid RowDefinitions="30,*">
+        <TextBox Name="SearchBox" TextChanged="TextBox_OnTextChanged"></TextBox>
+    <ListBox Grid.Row="1" Name="LineBox" Margin="0" Padding="0" ItemsSource="{Binding Lines}" x:DataType="viewModels:MainViewModel">
         <ListBox.Styles>
             <Style Selector="ListBoxItem">
                 <Setter Property="Padding" Value="0" />
@@ -35,4 +37,5 @@
             </DataTemplate>
         </ListBox.ItemTemplate>
     </ListBox>
+    </Grid>
 </UserControl>

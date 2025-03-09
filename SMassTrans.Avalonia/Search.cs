@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 
 namespace SMassTrans.Avalonia;
 
@@ -40,6 +41,7 @@ public static class Search
         return distance[currentRow, m];
     }
     public static int ModifiedLevenshteinDistance(string source, string target){
+        Debug.Write(source);
         if(string.IsNullOrEmpty(source))
         {
             return string.IsNullOrEmpty(target) ? 0 : target.Length;

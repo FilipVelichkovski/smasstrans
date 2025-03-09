@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Text;
+using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -60,4 +61,16 @@ public partial class LineView : UserControl
         });
     }
 
+    private void TextBox_OnTextChanged(object? sender, TextChangedEventArgs e)
+    {
+         if (DataContext is not MainViewModel mwv) return;
+        if (!string.IsNullOrWhiteSpace(SearchBox.Text))
+        {
+            mwv.Lines = new AvaloniaList<IRouteInfo>(mwv.Lines.OrderBy(x => Search.ModifiedLevenshteinDistance(x.Name.ToLowerInvariant(),SearchBox.Text.ToLowerInvariant()))); ;
+        }
+        else
+        {
+            mwv.Lines = new AvaloniaList<IRouteInfo>(mwv.Lines.OrderBy(x => x.LineRouteId.LineId));
+        }
+    }
 }
