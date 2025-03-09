@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=SMassTrans
+Comment=Self contained avalonia app for bus tracking
+Icon=SMassTrans
+Exec=/usr/bin/SMassTrans.Avalonia.PC
+Path=/usr/bin
+Categories=Development;

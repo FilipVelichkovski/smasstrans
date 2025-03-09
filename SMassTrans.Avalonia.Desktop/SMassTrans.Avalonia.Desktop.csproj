@@ -22,4 +22,13 @@
   <ItemGroup>
     <ProjectReference Include="..\SMassTrans.Avalonia\SMassTrans.Avalonia.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Update="smasstrans.desktop">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="smasstrans.appdata.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>

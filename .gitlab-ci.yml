@@ -19,11 +19,14 @@ build-desktop:
     - 'cd SMassTrans.Avalonia.Desktop/'
     - 'dotnet workload restore --project SMassTrans.Avalonia.Desktop.csproj --packages $NUGET_PACKAGES_DIRECTORY'
     - 'dotnet restore --force --packages $NUGET_PACKAGES_DIRECTORY'
-    - 'dotnet publish -c Release -f net8.0 --no-restore'
+    - 'dotnet publish -c Release r linux-x64 -f net8.0 --self-contained true --no-restore'
+    - 'cd bin/Release/net8.0/linux-x64/'
+    - 'bash ../../../../publish-appimg.sh'
   artifacts:
     expire_in: 1 week  
     paths:
-      - 'SMassTrans.Avalonia.Desktop/bin/Release/net8.0/publish'
+      - 'SMassTrans.Avalonia.Desktop/bin/Release/net8.0/linux-x64/publish/'
+      - 'SMassTrans.Avalonia.Desktop/bin/Release/net8.0/linux-x64/SMassTrans-x86_64.AppImage'
 
 build-mobile:
   stage: build

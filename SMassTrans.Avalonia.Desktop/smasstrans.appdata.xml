@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+    <id>smasstrans</id>
+    <metadata_license>CC0-1.0</metadata_license>
+    <project_license>licenseref-proprietary</project_license>
+    <name>SMassTrans</name>
+    <summary>Silver's Mass Transport app</summary>
+    <description>
+        <p>Silver's Mass Transport app for bus tracking.</p>
+    </description>
+    <launchable type="desktop-id">smasstrans.desktop</launchable>
+    <url type="homepage">https://gitlab.com/silvercraft/smasstrans</url>
+    <screenshots>
+    </screenshots>
+    <provides>
+        <id>smasstrans.desktop</id>
+    </provides>
+</component>
