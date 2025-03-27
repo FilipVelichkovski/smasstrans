@@ -7,3 +7,5 @@ Currently compatible with one service using "http://info.skopska.mk:8080" for st
 Runs on Linux, Android, Windows.
 
 Builds for web (WASM) but can't work because CORS.
+<img src="screenshot.png" alt="A map showing a bus in the middle"/>
+
