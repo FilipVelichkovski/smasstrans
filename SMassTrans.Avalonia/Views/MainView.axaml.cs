@@ -132,8 +132,8 @@ public partial class MainView : UserControl
                
                 await Dispatcher.UIThread.InvokeAsync(() =>
                 {
-                    model.Stops = new AvaloniaList<IStop>(stops);
-                    model.Lines = new( lines.OrderBy(x=>x.LineRouteId.LineId));
+                    model.Stops = [.. stops];
+                    model.Lines = [.. lines.OrderBy(x=>x.LineRouteId.LineId)];
                 });
             }
             catch (Exception exception)
@@ -209,18 +209,18 @@ public partial class MainView : UserControl
     void StopMap()
     {
         if (!MapEn) return;
-        if (layer != null)
+        if (layer != null && mapControl?.Map?.Layers.Contains(layer) == true)
         {
-            mapControl.Map?.Layers.Remove(layer);
+            mapControl.Map.Layers.Remove(layer);
         }
         layer?.Dispose();
         layer = null;
         BusPointProvider?.Dispose();
         BusPointProvider = null;
         
-        mapTabGrid.Children.Remove(mapControl);
         if (mapControl != null)
         {
+            mapTabGrid.Children.Remove(mapControl);
             CenterX = mapControl.Map?.Navigator.Viewport.CenterX;
             CenterY = mapControl.Map?.Navigator.Viewport.CenterY;
             Resolution = mapControl.Map?.Navigator.Viewport.Resolution;
