@@ -1,7 +1,6 @@
 ﻿using System.Globalization;
 using SMassTrans.Shared;
 
-Console.WriteLine(RegionInfo.CurrentRegion.Name);
 
 
 HttpClient hclient = new();
@@ -12,6 +11,8 @@ var app = new BusStopCLIApp(client);
 await app.InitializeAsync();
 var stopNameQuery = await app.AutocompleteSearchAsync();
 await app.SearchAndDisplayNextBusesAsync(stopNameQuery);
+   
+
 /*
 var stops = await client.GetStops();
 while (true)

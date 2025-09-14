@@ -51,7 +51,7 @@ public partial class StopInfo : UserControl
     {
         Task.Run(async () =>
         {
-            var linesAndTimes = await _client.GetStopLinesForStopId(_stop.StopId.ToString("0000"));
+            var linesAndTimes = await _client.GetLiveStopLinesForStopAsync(_stop.StopId.ToString("0000"));
             var upcomingBuses = linesAndTimes.SelectMany(x => x.Value.Select(y => new UpcomingBusOnStop(x.Key, y))).ToList();
             upcomingBuses.Sort((x,y)=>DateTime.Compare( x.Time, y.Time));
             Dispatcher.UIThread.Invoke(() =>

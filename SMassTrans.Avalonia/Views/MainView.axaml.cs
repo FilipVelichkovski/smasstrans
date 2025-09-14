@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
@@ -18,6 +19,7 @@ using Mapsui.Extensions;
 using Mapsui.Layers.AnimatedLayers;
 using Mapsui.Projections;
 using Mapsui.Styles;
+using ReactiveUI;
 using SMassTrans.Avalonia.ViewModels;
 using SMassTrans.Shared;
 using Brush = Mapsui.Styles.Brush;
@@ -32,6 +34,7 @@ public partial class MainView : UserControl
     bool Inited = false;
     Mapsui.UI.Avalonia.MapControl mapControl;
     private BusPointProvider BusPointProvider;
+    private LineRouteId? selectedBusLine;
     public MainView()
     {
         DataContext = model;
@@ -70,32 +73,10 @@ public partial class MainView : UserControl
 
     private MPoint Bitpazar = SphericalMercator.FromLonLat(21.439978, 42.000939).ToMPoint();
 
-    private void OnMapInfo(object? sender, MapInfoEventArgs e)
-    {
-       mapdata.Text= FeatureToText(e.MapInfo?.Feature);
-    }
-    public Func<IFeature?, string> FeatureToText { get; set; } = (f) =>
-    {
-        if (f is null) return string.Empty;
-        var result = new StringBuilder();
-        foreach (var field in f.Fields)
-        {
-            result.Append(field);
-            result.Append(':');
-            result.Append(' ');
-
-            if (field == "StopId" && f[field] is int x)
-            {
-                result.Append($" {x}.{client.GetStop(x.ToString("0000")).GetAwaiter().GetResult().StopName} - ");
-            }
-            else
-            {
-                result.Append($" {f[field]} - ");
-            }
-        }
-        result.Remove(result.Length - 2, 2);
-        return result.ToString();
-    };
+ 
+   
+ 
+ 
 
     private async void SetGpsLine(object? sender, LineRouteId e)
     {
@@ -192,6 +173,7 @@ public partial class MainView : UserControl
         
         mapControl.Map.Info += OnMapInfo;
         BusPointProvider = new BusPointProvider(GpsLine);
+        BusPointProvider.DataChanged += UpdateFeatureText;
         layer = new AnimatedPointLayer(BusPointProvider)
         {
             Name = "Buses",
@@ -206,6 +188,78 @@ public partial class MainView : UserControl
         mapControl.Map?.Layers.Add(layer); 
         MapEn = true;  
     }
+
+    private string? SelectedBusFeatureID = null;
+    private void OnMapInfo(object? sender, MapInfoEventArgs e)
+    {
+        if (e.MapInfo is not null)
+        {
+            if (e.MapInfo.Feature ==null)
+            {
+                SelectedBusFeatureID = null;
+            }
+            else
+            {
+                SelectedBusFeatureID = (string)e.MapInfo.Feature["ID"];
+            }
+        }
+        mapdata.Text = FeatureToText(e.MapInfo?.Feature);
+    }
+    private void UpdateFeatureText(object? sender, EventArgs e)
+    {
+        if (SelectedBusFeatureID != null)
+        {
+            var x = BusPointProvider.GetInfo(SelectedBusFeatureID);
+            var result = new StringBuilder();
+            foreach (var (field,data) in x)
+            {
+                result.Append(field);
+                result.Append(':');
+                result.Append(' ');
+
+                if (field == "StopId" &&  data is int xy)
+                {
+                    result.Append($" {xy}.{client.GetStop(xy.ToString("0000")).GetAwaiter().GetResult().StopName} - ");
+                }
+                else
+                {
+                    result.Append($" {data} - ");
+                }
+            }
+            result.Remove(result.Length - 2, 2);
+            var resultx = result.ToString();
+            Dispatcher.UIThread.Invoke(() =>
+            {
+                mapdata.Text = resultx;
+            });
+        }
+    }
+    public Func<IFeature?, string> FeatureToText { get; set; } = (f) =>
+    {
+        if (f is null) return string.Empty;
+        var result = new StringBuilder();
+        foreach (var field in f.Fields)
+        {
+            result.Append(field);
+            result.Append(':');
+            result.Append(' ');
+
+            if (field == "StopId" && f[field] is int x)
+            {
+                result.Append($" {x}.{client.GetStop(x.ToString("0000")).GetAwaiter().GetResult().StopName} - ");
+            }
+            else
+            {
+                result.Append($" {f[field]} - ");
+            }
+        }
+        result.Remove(result.Length - 2, 2);
+        return result.ToString();
+    };
+    
+ 
+  
+
     void StopMap()
     {
         if (!MapEn) return;
@@ -215,6 +269,8 @@ public partial class MainView : UserControl
         }
         layer?.Dispose();
         layer = null;
+        mapControl.Map.Info -= OnMapInfo;
+        BusPointProvider.DataChanged -= UpdateFeatureText;
         BusPointProvider?.Dispose();
         BusPointProvider = null;
         

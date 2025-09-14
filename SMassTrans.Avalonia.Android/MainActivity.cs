@@ -26,8 +26,9 @@ public class MainActivity : AvaloniaMainActivity<App>
             var res = await MainThread.InvokeOnMainThreadAsync(async () =>
                 await Geolocation.Default.GetLocationAsync(request));
             if (res == null) return new(0, 0);
-            return new (res.Latitude, res.Longitude);
+            return new(res.Latitude, res.Longitude);
         };
+        LocationGatherer.HasGps = true;
     }
     protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
     {

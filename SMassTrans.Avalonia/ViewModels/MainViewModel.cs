@@ -83,6 +83,13 @@ public class MainViewModel : ViewModelBase
     
     public Stack<Control> PrevLinePages=new();
 
+    private Control? _routeFindPage = new SMassTrans.Avalonia.Views.RouteFindView();
+    public Control? RouteFindPage
+    {
+        get => _routeFindPage;
+        set => this.RaiseAndSetIfChanged(ref _routeFindPage, value);
+    }
+
       private string _mapName = "Map";
     public string MapName{
         get=>_mapName;

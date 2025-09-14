@@ -116,6 +116,15 @@ public class Skopska : IClient<SkopskaStop, LineInfo>
         await GetLines();
         return LineInfoCache.Value.First(x => x.LineRouteIds.Any(x => x.LineId == lineId));
     }
+      public async Task<IEnumerable<LineInfo>> GetAllLineInfo()
+    {
+        if (RouteInfoCache is {IsValid:true})
+        {
+            return LineInfoCache.Value;
+        }
+        await GetLines();
+        return LineInfoCache.Value;
+    }
       public async Task<LineInfo> GetLineInfo(LineRouteId lineId)
     {
         if (LineInfoCache is { IsValid: true })
@@ -155,26 +164,26 @@ public class Skopska : IClient<SkopskaStop, LineInfo>
         }
     }
 
-    public Task<IReadOnlyDictionary<LineRouteId, IReadOnlyList<int>>> GetStopLinesForStop(SkopskaStop stop)
+    public Task<IEnumerable<KeyValuePair<LineRouteId,IReadOnlyList<int>>>> GetLiveStopLinesForStopAsync(SkopskaStop stop)
     {
-       return GetStopLinesForStopId(stop.StopId.ToString("0000"));
+       return GetLiveStopLinesForStopAsync(stop.StopId.ToString("0000"));
     }
     /// <summary>
     /// Gets LIVE data for stop
     /// </summary>
     /// <param name="stopId">stop's id</param>
     /// <returns>LIVE data for upcoming busses</returns>
-    public async Task<IReadOnlyDictionary<LineRouteId, IReadOnlyList<int>>> GetStopLinesForStopId(string stopId)
+    public async Task<IEnumerable<KeyValuePair<LineRouteId, IReadOnlyList<int>>>> GetLiveStopLinesForStopAsync(string stopId)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, stoplinesUrl + "/" + stopId);
         request.Headers.Add("eurogps.eu.sid", SessionId);
         var response = await client.SendAsync(request);
         response.EnsureSuccessStatusCode();
         var enu = response.Content.ReadFromJsonAsAsyncEnumerable<StopLines>();
-        Dictionary<LineRouteId, IReadOnlyList<int>> lines = [];
+        List<KeyValuePair<LineRouteId, IReadOnlyList<int>>> lines = [];
         await foreach (var s in enu)
         {
-            lines.Add(new(s.LineId.ToString(), s.RouteId.ToString()), s.RemainingTime);
+            lines.Add(new KeyValuePair<LineRouteId, IReadOnlyList<int>>(new (s.LineId.ToString(), s.RouteId.ToString()), s.RemainingTime));
         }
         return lines;
     }

@@ -21,7 +21,7 @@ public class BusStopCLIApp
 
         foreach (var stop in matchingStops)
         {
-            var linesAndTimes = await _client.GetStopLinesForStopId(stop.StopId.ToString("0000"));
+            var linesAndTimes = await _client.GetLiveStopLinesForStopAsync(stop.StopId.ToString("0000"));
             Console.WriteLine($"{stop.StopName}:");
 
             foreach (var (lineRouteId, times) in linesAndTimes)

@@ -49,6 +49,26 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
             await s.SubscribeToLine(line);
         });
     }
+
+    public Dictionary<string, object>? GetInfo(string Id)
+    {
+        var x = infos.FirstOrDefault(x => x.Id == Id);
+        if (x == null)
+        {
+            return null;
+        }
+        var p = new Dictionary<string, object>();
+        p["ID"] = x.Id;
+        p["Status"] = x.Status;
+        p["Speed"] = x.Speed + "km/h";
+        p["Delay"] = x.Delay;
+        p["Ignition"] = x.Ignition;
+        p["StopIndex"] = x.StopIndex;
+        p["StopId"] = x.StopId;
+        p["RouteId"] = x.RouteId;
+        p["CourseId"] = x.CourseId;
+        return p;
+    }
     private List<IGpsInfo> infos = new();
     /* public  MRect? GetExtent()
      {
