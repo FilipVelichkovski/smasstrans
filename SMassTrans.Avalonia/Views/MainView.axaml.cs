@@ -2,8 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Collections;
@@ -17,13 +21,16 @@ using Avalonia.Threading;
 using Mapsui;
 using Mapsui.Extensions;
 using Mapsui.Layers.AnimatedLayers;
+using Mapsui.Nts;
 using Mapsui.Projections;
 using Mapsui.Styles;
+using PolylineAlgorithm;
 using ReactiveUI;
 using SMassTrans.Avalonia.ViewModels;
 using SMassTrans.Shared;
 using Brush = Mapsui.Styles.Brush;
 using Color = Mapsui.Styles.Color;
+using Pen = Mapsui.Styles.Pen;
 
 namespace SMassTrans.Avalonia.Views;
 
@@ -81,6 +88,7 @@ public partial class MainView : UserControl
     private async void SetGpsLine(object? sender, LineRouteId e)
     {
         var info = await client.GetRouteInfo(e);
+        selectedBusLine = e;
         SetGpsLine(info);
     }
 
@@ -123,7 +131,7 @@ public partial class MainView : UserControl
             }
         });
     }
-
+    private Mapsui.Layers.WritableLayer _routeLayer;
     private AnimatedPointLayer layer;
     public static string GpsLine = "1126";
     private void SelectingItemsControl_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -146,6 +154,87 @@ public partial class MainView : UserControl
         e.Handled = true;
     }
 
+    private Dictionary<string, List<string>> Geometry = new();
+    void LoadGeometry()
+    {
+        try
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            var resourceName = "SMassTrans.Avalonia.fullRouteGeometries.json";
+            using Stream? stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream == null)
+            {
+                var names = assembly.GetManifestResourceNames();
+                Debug.WriteLine("Resource not found. Available resources: " + string.Join(", ", names));
+                return;
+            }
+            using StreamReader reader = new StreamReader(stream);
+            string json = reader.ReadToEnd();
+            Geometry = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(json);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error loading embedded geometry: {ex.Message}");
+        }
+    }
+    private IEnumerable<(double Latitude, double Longitude)> DecodePrecision6(string polyline)
+    {
+        var sequence = polyline.AsMemory();
+        int position = 0;
+        int latInt = 0;
+        int lonInt = 0;
+        const double precision6 = 1000000.0; // 10^6
+        while (position < sequence.Length)
+        {
+            if (!PolylineEncoding.TryReadValue(ref latInt, ref sequence, ref position) ||
+                !PolylineEncoding.TryReadValue(ref lonInt, ref sequence, ref position))
+            {
+                break;
+            }
+            yield return (latInt / precision6, lonInt / precision6);
+        }
+    }
+    private void LoadRouteGeometry()
+    {
+        if (selectedBusLine == null || _routeLayer == null) return;
+        LoadGeometry();
+        string routeKey = $"{selectedBusLine?.LineId}_{selectedBusLine?.RouteId}";
+        if (Geometry != null && Geometry.TryGetValue(routeKey, out var shapes))
+        {
+            var allPoints = new List<MPoint>();
+            foreach (var polyline in shapes)
+            {
+                var coords = DecodePrecision6(polyline);
+                foreach (var coord in coords)
+                {
+                    // Convert to SphericalMercator (Mapsui requirement)
+                    var worldPoint = SphericalMercator.FromLonLat(coord.Longitude, coord.Latitude).ToMPoint();
+                    allPoints.Add(worldPoint);
+                }
+            }
+            if (allPoints.Count > 0)
+            {
+                var lineString = new NetTopologySuite.Geometries.LineString(
+                    allPoints.Select(p => new NetTopologySuite.Geometries.Coordinate(p.X, p.Y)).ToArray());
+
+                var feature = new GeometryFeature(lineString);
+                // Semi-transparent orange/red style
+                feature.Styles.Add(new VectorStyle
+                {
+                    Line = new Pen
+                    {
+                        Color = new Color(255, 0, 0, 150), 
+                        Width = 10,
+                        PenStrokeCap = PenStrokeCap.Round,
+                    }
+                });
+
+                _routeLayer.Clear();
+                _routeLayer.Add(feature);
+                mapControl.RefreshGraphics();
+            }
+        }
+    }
     void StartMap()
     {
         if (MapEn) return;
@@ -154,6 +243,9 @@ public partial class MainView : UserControl
         mapControl.Initialized += (sender, args) =>
         {
             mapControl.Map?.Layers.Add(OpenStreetMap.CreateTileLayer());
+            _routeLayer = new Mapsui.Layers.WritableLayer { Name = "Bus Route Shape" };
+            mapControl.Map?.Layers.Add(_routeLayer);
+            LoadRouteGeometry();
             try
             {
                 if (CenterX is { } x && CenterY is { } y)

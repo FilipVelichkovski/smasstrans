@@ -15,7 +15,7 @@ public class Skopska : IClient<SkopskaStop, LineInfo>
     }
     const string baseUrl = "http://info.skopska.mk:8080";
     const string authUrl = baseUrl + "/rest-auth/guests?aid=3136";
-    const string stopsUrl = baseUrl + "/rest-its/scheme/stops?filter=true";
+    const string stopsUrl = baseUrl + "/rest-its/scheme/stops";//?filter=true
     const string routesUrl = baseUrl + "/rest-its/scheme/routes";
     const string linesUrl = baseUrl + "/rest-its/scheme/lines";
     const string stoplinesUrl = baseUrl + "/rest-its/scheme/stop-lines";
