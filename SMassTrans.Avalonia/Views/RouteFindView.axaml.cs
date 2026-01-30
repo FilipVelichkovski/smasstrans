@@ -30,6 +30,14 @@ public partial class RouteFindView : UserControl
     private async void RouteFindView_Loaded(object? sender, EventArgs e)
     {
         model = (this.DataContext as MainViewModel);
+        if(string.IsNullOrEmpty(model?.RouteFrom) == false)
+        {
+              FromTextBox.Text= model.RouteFrom;
+        }
+        if(string.IsNullOrEmpty(model?.RouteTo) == false)
+        {
+              ToTextBox.Text= model.RouteTo;
+        }
         if (model != null && model.client != null)
         {
             allStops = await model.client.GetStops();
@@ -62,20 +70,7 @@ public partial class RouteFindView : UserControl
         (fromStop, toStop) = (toStop, fromStop);
     }
 
-    private void FromMapBtn_Click(object? sender, RoutedEventArgs e)
-    {
-        // TODO: Implement map selection for start
-        // For now, just clear the field
-        FromTextBox.Text = "";
-    }
-
-    private void ToMapBtn_Click(object? sender, RoutedEventArgs e)
-    {
-        // TODO: Implement map selection for end
-        // For now, just clear the field
-        ToTextBox.Text = "";
-    }
-
+    
     private async void OnFindRouteClick(object? sender, RoutedEventArgs e)
     {
         if (model == null || model.client == null || allStops == null)

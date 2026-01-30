@@ -95,5 +95,19 @@ public class MainViewModel : ViewModelBase
         get=>_mapName;
         set => this.RaiseAndSetIfChanged(ref _mapName, value);
     }
+
+    private string? _routeFrom;
+    public string? RouteFrom
+    {
+        get => _routeFrom;
+        set => this.RaiseAndSetIfChanged(ref _routeFrom, value);
+    }
+
+    private string? _routeTo;
+    public string? RouteTo
+    {
+        get => _routeTo;
+        set => this.RaiseAndSetIfChanged(ref _routeTo, value);
+    }
 }
 

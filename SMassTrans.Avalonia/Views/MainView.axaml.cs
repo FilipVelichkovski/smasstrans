@@ -197,10 +197,18 @@ public partial class MainView : UserControl
     private void LoadRouteGeometry()
     {
         if (selectedBusLine == null || _routeLayer == null) return;
+        if(mapControl==null) return;
+
         LoadGeometry();
         string routeKey = $"{selectedBusLine?.LineId}_{selectedBusLine?.RouteId}";
         if (Geometry != null && Geometry.TryGetValue(routeKey, out var shapes))
         {
+            if(shapes==null || shapes.Count==0)
+            {
+                _routeLayer.Clear();
+                return;
+            }
+
             var allPoints = new List<MPoint>();
             foreach (var polyline in shapes)
             {
@@ -235,6 +243,8 @@ public partial class MainView : UserControl
             }
         }
     }
+
+
     void StartMap()
     {
         if (MapEn) return;
@@ -262,7 +272,7 @@ public partial class MainView : UserControl
             }
         };
         mapTabGrid.Children.Add(mapControl);
-        
+        mapControl.PointerReleased+= MapControl_PointerReleased;
         mapControl.Map.Info += OnMapInfo;
         BusPointProvider = new BusPointProvider(GpsLine);
         BusPointProvider.DataChanged += UpdateFeatureText;
@@ -281,9 +291,56 @@ public partial class MainView : UserControl
         MapEn = true;  
     }
 
+    private void MapControl_PointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        if (e.InitialPressMouseButton != MouseButton.Right) return;
+        var screenPosition = e.GetPosition(mapControl);
+        var mapInfo = mapControl.GetMapInfo(new Mapsui.Manipulations.ScreenPosition(screenPosition.X, screenPosition.Y));
+        if (mapInfo?.WorldPosition != null)
+        {
+            var wpObj = mapInfo.WorldPosition;
+            var pxProp = wpObj.GetType().GetProperty("X");
+            var pyProp = wpObj.GetType().GetProperty("Y");
+            if (pxProp != null && pyProp != null)
+            {
+                double x = Convert.ToDouble(pxProp.GetValue(wpObj));
+                double y = Convert.ToDouble(pyProp.GetValue(wpObj));
+                var lonlat = SphericalMercator.ToLonLat(x, y);
+                ShowMapContextMenu(lonlat.lat, lonlat.lon);
+            }
+        }
+    }
+
+    private void ShowMapContextMenu( double latitude, double longitude)
+    {
+        if (DataContext is not MainViewModel mwv) return;
+
+        var fromItem = new MenuItem { Header = "Set Route From Here" };
+        var toItem = new MenuItem { Header = "Set Route To Here" };
+
+        fromItem.Click += (_, _) =>
+        {
+            mwv.RouteFrom = $"{latitude:0.######},{longitude:0.######}";
+            
+            Dispatcher.UIThread.InvokeAsync(() => mapdata.Text = $"Route From: {mwv.RouteFrom}");
+        };
+        toItem.Click += (_, _) =>
+        {
+            mwv.RouteTo = $"{latitude:0.######},{longitude:0.######}";
+            Dispatcher.UIThread.InvokeAsync(() => mapdata.Text = $"Route To: {mwv.RouteTo}");
+        };
+
+        var menu = new ContextMenu
+        {
+        };
+        menu.ItemsSource =new List<MenuItem> { fromItem, toItem };
+        menu.Open(mapControl);
+    }
+
     private string? SelectedBusFeatureID = null;
     private void OnMapInfo(object? sender, MapInfoEventArgs e)
     {
+        
         if (e.MapInfo is not null)
         {
             if (e.MapInfo.Feature ==null)
