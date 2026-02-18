@@ -86,4 +86,16 @@
   <data name="RouteFinderWarning" >
     <value>Не верувај слепо на пронаоѓачот на маршрути, маршрутите можеби се неточни, не користи живи податоци</value>
   </data>
+  <data name="InvalidInput" >
+    <value>Молиме внесете валидни почетни и крајни координати или имиња на постојки.</value>
+  </data>
+  <data name="NoRouteFound" >
+    <value>Нема пронајдена маршрута.</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>Назад</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>Освежи</value>
+  </data>
 </root>

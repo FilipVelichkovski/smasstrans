@@ -59,4 +59,16 @@
   <data name="RouteFinderWarning" xml:space="preserve">
     <value>Do not blindly trust the route finder, routes may be incorrect, it does not use live data</value>
   </data>
+  <data name="InvalidInput" xml:space="preserve">
+    <value>Please enter valid start and end coordinates or stop names.</value>
+  </data>
+  <data name="NoRouteFound" xml:space="preserve">
+    <value>No route found.</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>Back</value>
+  </data>
 </root>

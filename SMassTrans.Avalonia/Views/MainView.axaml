@@ -40,7 +40,7 @@
             <TabItem Header="{Binding MapName}" Name="MapTabItem">
               <Grid RowDefinitions="11*,1*,1*" Name="mapTabGrid">
                   <TextBlock Grid.Row="1" Name="mapdata" TextWrapping="Wrap" FontSize="16"></TextBlock>
-                  <Button Grid.Row="2" Click="GPSButton_OnClick" IsVisible="{Binding Source={x:Static local:LocationGatherer.HasGps}}">{x:Static lang:Resources.GPSOnMap}</Button>
+                  <Button Grid.Row="2" Click="GPSButton_OnClick" IsVisible="{Binding Source={x:Static local:LocationGatherer.HasGps}}" Content="{x:Static lang:Resources.GPSOnMap}"/>
               </Grid>
             </TabItem>
         </TabControl>

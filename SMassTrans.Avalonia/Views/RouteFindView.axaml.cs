@@ -5,6 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using SMassTrans.Shared;
 using SMassTrans.Avalonia.ViewModels;
+using SMassTrans.Avalonia.Lang;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -79,7 +80,7 @@ public partial class RouteFindView : UserControl
         var (start, end) = ParseInputs();
         if (start is null || end is null)
         {
-            ShowResult("Please enter valid start and end coordinates or stop names.");
+            ShowResult(Lang.Resources.InvalidInput);
             return;
         }
 
@@ -88,7 +89,7 @@ public partial class RouteFindView : UserControl
         var paths = await routeFinder.FindPathAsync(start, end, model.client, lines);
         if (paths.Count == 0)
         {
-            ShowResult("No route found.");
+            ShowResult(Lang.Resources.NoRouteFound);
         }
         else
         {

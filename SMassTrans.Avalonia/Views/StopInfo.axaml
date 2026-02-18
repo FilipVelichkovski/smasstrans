@@ -45,8 +45,8 @@
             </ListBox>
         </RefreshContainer>
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Click="RefreshRequested">Refresh</Button>
-            <Button Click="BackRequested">Back</Button>
+            <Button Click="RefreshRequested"  Content="{x:Static lang:Resources.Refresh}"/>
+            <Button Click="BackRequested" Content="{x:Static lang:Resources.Back}"/>
         </StackPanel>
     </Grid>
 </UserControl>
