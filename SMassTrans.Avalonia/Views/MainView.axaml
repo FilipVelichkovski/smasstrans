@@ -38,7 +38,7 @@
             <TabItem Header="Route Finder" Content="{Binding RouteFindPage}" />
             <TabItem Header="{Binding MapName}" Name="MapTabItem">
               <Grid RowDefinitions="11*,1*,1*" Name="mapTabGrid">
-                  <TextBlock Grid.Row="1" Name="mapdata" TextWrapping="Wrap" FontSize="18"></TextBlock>
+                  <TextBlock Grid.Row="1" Name="mapdata" TextWrapping="Wrap" FontSize="10"></TextBlock>
                   <Button Grid.Row="2" Click="GPSButton_OnClick" IsVisible="{Binding Source={x:Static local:LocationGatherer.HasGps}}">GPS on map</Button>
               </Grid>
             </TabItem>
