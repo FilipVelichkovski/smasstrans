@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Text;
 using Avalonia.Collections;
@@ -66,7 +67,14 @@ public partial class LineView : UserControl
          if (DataContext is not MainViewModel mwv) return;
         if (!string.IsNullOrWhiteSpace(SearchBox.Text))
         {
-            mwv.Lines = new AvaloniaList<IRouteInfo>(mwv.Lines.OrderBy(x => Search.ModifiedLevenshteinDistance(x.Name.ToLowerInvariant(),SearchBox.Text.ToLowerInvariant()))); ;
+            var searchTerm = SearchBox.Text.ToLowerInvariant();
+            mwv.Lines = new AvaloniaList<IRouteInfo>(mwv.Lines.OrderBy(x =>  
+            {
+                var distance1 = Search.ModifiedLevenshteinDistance(x.Name.ToLowerInvariant(), searchTerm);
+                var lineInfo = mwv.client.GetLineInfo(x.LineRouteId).GetAwaiter().GetResult();
+                var distance2 = Search.ModifiedLevenshteinDistance(lineInfo.Name.ToLowerInvariant(), searchTerm);
+                return Math.Min(distance1, distance2);
+            })); ;
         }
         else
         {

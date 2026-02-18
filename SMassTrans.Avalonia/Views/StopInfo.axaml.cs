@@ -1,10 +1,7 @@
 using System;
-using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
-using Avalonia.Data;
-using Avalonia.Data.Converters;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
@@ -126,39 +123,4 @@ public partial class StopInfo : UserControl
         }
     }
 
-}
-
-public class UpcomingBusOnStop
-{
-    public UpcomingBusOnStop(LineRouteId lineAndRoute, double time)
-    {
-        LineAndRoute = lineAndRoute;
-        Time = DateTime.Now.AddSeconds(time);
-    }
-
-    public LineRouteId LineAndRoute { get; set; }
-    public DateTime Time { get; set; }
-}
-public class LineRouteIdConverter : IValueConverter
-{
-    public static readonly LineRouteIdConverter Instance = new();
-
-    public object? Convert(object? value, Type targetType, object? parameter, 
-        CultureInfo culture)
-    {
-        if (value is LineRouteId linerouteID  
-                                       && targetType.IsAssignableTo(typeof(string)))
-        {
-           var res= Task.Run(async () => await MainView.client.GetLineInfo(linerouteID)).GetAwaiter().GetResult();
-            return res.Name;
-        }
-        return new BindingNotification(new InvalidCastException(), 
-            BindingErrorType.Error);
-    }
-
-    public object ConvertBack(object? value, Type targetType, 
-        object? parameter, CultureInfo culture)
-    {
-        throw new NotSupportedException();
-    }
 }
