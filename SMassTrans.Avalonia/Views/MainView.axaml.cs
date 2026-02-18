@@ -51,9 +51,9 @@ public partial class MainView : UserControl
             topLevel.InsetsManager.DisplayEdgeToEdge = true;
             topLevel.InsetsManager.SafeAreaChanged += (s, args) =>
             {
-                MainContentContainer.Padding = args.SafeAreaPadding;
+                //MainContentContainer.Padding = args.SafeAreaPadding;
             };
-            MainContentContainer.Padding = topLevel.InsetsManager.SafeAreaPadding;
+            //MainContentContainer.Padding = topLevel.InsetsManager.SafeAreaPadding;
         }
     }
     public MainView()

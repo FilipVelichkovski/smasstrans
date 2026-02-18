@@ -52,4 +52,4 @@ build-mobile:
   artifacts:
     expire_in: 1 week
     paths:
-      - 'SMassTrans.Avalonia.Android/bin/Release/net10.0-android/publish/*'
+      - 'out-mobile/'
