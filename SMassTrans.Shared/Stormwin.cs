@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 using System.Net.WebSockets;
 using System.Text;
@@ -21,18 +22,30 @@ public class Stormwin : IGps
             var bytes = new byte[1024 * 256];
             var result = await ws.ReceiveAsync(bytes, default);
             string res = Encoding.UTF8.GetString(bytes, 0, result.Count);
+            Debug.WriteLine(res);
             if (res == "ping")
             {
                 await ws.SendAsync("pong"u8.ToArray(), WebSocketMessageType.Text, true, cancellationToken);
                 continue;
             }
-            var gps = JsonSerializer.Deserialize<GPSRoot>(res);
-            var igps = new GpsData();
-            igps.Id = gps.RouteId;
-            igps.Infos = new();
-            igps.Infos.AddRange(gps.Positions);
-            DataRecieved?.Invoke(this, igps);
+            try
+            {
+                var gps = JsonSerializer.Deserialize<GPSRoot>(res);
+                var igps = new GpsData
+                {
+                    Id = gps.RouteId,
+                    Infos = []
+                };
+                igps.Infos.AddRange(gps.Positions);
+                DataRecieved?.Invoke(this, igps);
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e);
+                throw;
+            }
         }
+        Debug.WriteLine("normal cancellation");
         await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, null, default);
     }
     public async Task SubscribeToLine(string Line)
@@ -127,7 +140,7 @@ public class Position : IGpsInfo
 public class GPSRoot
 {
     [JsonPropertyName("routeId")]
-    public string RouteId { get; set; }
+    public int RouteId { get; set; }
 
     [JsonPropertyName("positions")]
     public List<Position> Positions { get; set; }
