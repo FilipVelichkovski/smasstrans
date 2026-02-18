@@ -240,12 +240,11 @@ public partial class MainView : UserControl
                     allPoints.Select(p => new NetTopologySuite.Geometries.Coordinate(p.X, p.Y)).ToArray());
 
                 var feature = new GeometryFeature(lineString);
-                // Semi-transparent orange/red style
                 feature.Styles.Add(new VectorStyle
                 {
                     Line = new Pen
                     {
-                        Color = new Color(255, 0, 0, 150), 
+                        Color = new Color(255, 0, 0, 100), 
                         Width = 10,
                         PenStrokeCap = PenStrokeCap.Round,
                     }
@@ -267,7 +266,7 @@ public partial class MainView : UserControl
         mapControl.Initialized += (sender, args) =>
         {
             mapControl.Map?.Layers.Add(OpenStreetMap.CreateTileLayer());
-            _routeLayer = new Mapsui.Layers.WritableLayer { Name = "Bus Route Shape" };
+            _routeLayer = new Mapsui.Layers.WritableLayer { Name = "Bus Route Shape", Style = null  };
             mapControl.Map?.Layers.Add(_routeLayer);
             LoadRouteGeometry();
             try
@@ -293,11 +292,10 @@ public partial class MainView : UserControl
         layer = new AnimatedPointLayer(BusPointProvider)
         {
             Name = "Buses",
-            Style = new LabelStyle
+            Style = new SymbolStyle()
             {
-                BackColor = new Brush(Color.Red),
-                ForeColor = Color.White,
-                Text = "Bus",
+                ImageSource = "embedded://SMassTrans.Avalonia.tiny2dbus.png",
+                SymbolScale = 1.0
             },
             IsMapInfoLayer = true
         };

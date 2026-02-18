@@ -36,5 +36,7 @@
   <ItemGroup>
     <None Remove="fullRouteGeometries.json" />
     <EmbeddedResource Include="fullRouteGeometries.json" />
+    <None Remove="tiny2dbus.png" />
+    <EmbeddedResource Include="tiny2dbus.png" />
   </ItemGroup>
 </Project>
