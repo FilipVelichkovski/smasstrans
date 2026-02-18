@@ -36,7 +36,7 @@ build-mobile:
     - 'cd SMassTrans.Avalonia.Android/'
     - 'dotnet workload restore --project SMassTrans.Avalonia.Android.csproj --packages $NUGET_PACKAGES_DIRECTORY'
     - 'dotnet restore --force --packages $NUGET_PACKAGES_DIRECTORY'
-    - 'dotnet publish -c Release -p:ExtraDefineConstants="gitlabci" -p:AndroidSdkDirectory=/usr/lib/android-sdk/ -p:JavaSdkDirectory=/usr/lib/jvm/java-17-openjdk-amd64/ -f net8.0-android --no-restore'
+    - 'dotnet publish -c Release -p:ExtraDefineConstants="gitlabci" -p:AndroidSdkDirectory=/usr/lib/android-sdk/ -p:JavaSdkDirectory=/usr/lib/jvm/java-17-openjdk-amd64/ -f net10.0-android --no-restore'
   artifacts:
     expire_in: 1 week
     paths:
