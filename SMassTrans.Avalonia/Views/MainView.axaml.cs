@@ -42,6 +42,20 @@ public partial class MainView : UserControl
     Mapsui.UI.Avalonia.MapControl mapControl;
     private BusPointProvider BusPointProvider;
     private LineRouteId? selectedBusLine;
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel?.InsetsManager != null)
+        {
+            topLevel.InsetsManager.DisplayEdgeToEdge = true;
+            topLevel.InsetsManager.SafeAreaChanged += (s, args) =>
+            {
+                MainContentContainer.Padding = args.SafeAreaPadding;
+            };
+            MainContentContainer.Padding = topLevel.InsetsManager.SafeAreaPadding;
+        }
+    }
     public MainView()
     {
         DataContext = model;

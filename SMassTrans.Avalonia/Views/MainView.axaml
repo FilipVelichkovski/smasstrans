@@ -25,7 +25,8 @@
         </ResourceDictionary>
         <views:LineRouteIdConverter x:Key="lineRouteIdConverter"/>
     </UserControl.Resources>
-    <Grid RowDefinitions="*,30">
+    <Border x:Name="MainContentContainer">
+    <Grid  x:Name="MainContent" RowDefinitions="*,30">
         <TabControl Name="TabCtl" SelectionChanged="SelectingItemsControl_OnSelectionChanged">
             <TabItem Header="Stops" Content="{Binding StopContent}">
             </TabItem>
@@ -43,4 +44,5 @@
             </TabItem>
         </TabControl>
     </Grid>
+    </Border>
 </UserControl>

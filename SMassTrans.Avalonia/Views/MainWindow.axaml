@@ -8,5 +8,5 @@
         x:Class="SMassTrans.Avalonia.Views.MainWindow"
         Icon="/Assets/Icon.png"
         Title="SMassTrans.Avalonia">
-        <views:MainView x:Name="MainContent" />
+        <views:MainView />
 </Window>
