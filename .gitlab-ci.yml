@@ -21,16 +21,7 @@ build-desktop:
     - 'cd SMassTrans.Avalonia.Desktop/'
     - 'dotnet workload restore --project SMassTrans.Avalonia.Desktop.csproj --packages $NUGET_PACKAGES_DIRECTORY'
     - 'dotnet restore --force --packages $NUGET_PACKAGES_DIRECTORY'
-    - |
-      dotnet publish -c Release -f net10.0-android --no-restore \
-      -p:ExtraDefineConstants="gitlabci" \
-      -p:AndroidKeyStore=True \
-      -p:AndroidSigningKeyStore=$ANDROID_KEY_STOREFILE \
-      -p:AndroidSigningStorePass=$ANDROID_KEYSTORE_PASSWORD \
-      -p:AndroidSigningKeyAlias=$ANDROID_KEY_ALIAS \
-      -p:AndroidSigningKeyPass=$ANDROID_KEYSTORE_PASSWORD \
-      -p:AndroidSdkDirectory=/usr/lib/android-sdk/ \
-      -p:JavaSdkDirectory=$JAVA_HOME
+    - 'dotnet publish -c Release -r linux-x64 -f net8.0 --self-contained true'
     - 'cd bin/Release/net8.0/linux-x64/'
     - 'bash ../../../../publish-appimg.sh'
   artifacts:
@@ -45,11 +36,21 @@ build-mobile:
     - 'cd SMassTrans.Avalonia.Android/'
     - 'dotnet workload restore --project SMassTrans.Avalonia.Android.csproj --packages $NUGET_PACKAGES_DIRECTORY'
     - 'dotnet restore --force --packages $NUGET_PACKAGES_DIRECTORY'
-    - 'dotnet publish -c Release -p:ExtraDefineConstants="gitlabci" -p:AndroidSdkDirectory=/usr/lib/android-sdk/ -p:JavaSdkDirectory=/usr/lib/jvm/java-17-openjdk-amd64/ -f net10.0-android --no-restore'
+    - |
+      dotnet publish -c Release -f net10.0-android --no-restore \
+      -p:ExtraDefineConstants="gitlabci" \
+      -p:AndroidKeyStore=True \
+      -p:AndroidSigningKeyStore=$ANDROID_KEY_STOREFILE \
+      -p:AndroidSigningStorePass=$ANDROID_KEYSTORE_PASSWORD \
+      -p:AndroidSigningKeyAlias=$ANDROID_KEY_ALIAS \
+      -p:AndroidSigningKeyPass=$ANDROID_KEYSTORE_PASSWORD \
+      -p:AndroidSdkDirectory=/usr/lib/android-sdk/ \
+      -p:JavaSdkDirectory=$JAVA_HOME
     - 'cd ..'
     - 'mkdir -p out-mobile'
     - 'cp SMassTrans.Avalonia.Android/bin/Release/net10.0-android/publish/*.apk out-mobile/'
   artifacts:
     expire_in: 1 week
     paths:
-      - 'out-mobile/'
+      - 'SMassTrans.Avalonia.Android/bin/Release/net8.0-android/publish/*'
+      - 'SMassTrans.Avalonia.Android/bin/Release/net10.0-android/publish/*'
