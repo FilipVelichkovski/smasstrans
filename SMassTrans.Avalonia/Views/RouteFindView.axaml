@@ -5,7 +5,7 @@
              x:Class="SMassTrans.Avalonia.Views.RouteFindView">
     <Grid Margin="10" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*">
         <TextBlock Grid.Row="0" Text="Route Finder" FontWeight="Bold" FontSize="18" Margin="0,0,0,10"/>
-        <TextBlock Grid.Row="1" Text="Do not blindly trust the route finder, routes may be incorrect, it does not use live data" FontWeight="Bold" Margin="0,0,0,10"/>
+        <TextBlock Grid.Row="1" Text="Do not blindly trust the route finder, routes may be incorrect, it does not use live data" FontWeight="Bold" FontSize="18" Margin="0,0,0,10"/>
         <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8">
             <TextBlock Text="From:" VerticalAlignment="Center"/>
             <TextBox Name="FromTextBox" Width="160" Watermark="Type stop name or coordinates"/>

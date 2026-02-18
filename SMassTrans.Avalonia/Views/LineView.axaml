@@ -29,9 +29,9 @@
                                 <MenuItem Header="View stops" Click="ViewStops"/>
                             </ContextMenu>
                         </StackPanel.ContextMenu>
-                        <TextBlock Text="{Binding LineRouteId, Converter={StaticResource lineRouteIdConverter}}" Padding="0,10,5,0" />
-                        <TextBlock Text="{Binding Name}" Padding="0,10,5,0" />
-                        <TextBlock Text="{Binding Direction}" Padding="0,10,5,0" />
+                        <TextBlock Text="{Binding LineRouteId, Converter={StaticResource lineRouteIdConverter}}" FontSize="18" Padding="0,10,5,0" />
+                        <TextBlock Text="{Binding Name}" FontSize="18" Padding="0,10,5,0" />
+                        <TextBlock Text="{Binding Direction}" FontSize="18" Padding="0,10,5,0" />
                     </StackPanel>
                 </Border>
             </DataTemplate>

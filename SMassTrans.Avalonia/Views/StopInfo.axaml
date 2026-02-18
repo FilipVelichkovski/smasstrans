@@ -36,8 +36,8 @@
 
                                 </ContextMenu>
                             </StackPanel.ContextMenu>
-                            <TextBlock Text="{Binding LineAndRoute, Converter={StaticResource lineRouteIdConverter}}" Margin="5,5,10,5" />
-                            <TextBlock Text="{Binding Time}"  Margin="10,5,5,5" />
+                            <TextBlock Text="{Binding LineAndRoute, Converter={StaticResource lineRouteIdConverter}}" FontSize="18" Margin="5,5,10,5" />
+                            <TextBlock Text="{Binding Time}" FontSize="18" Margin="10,5,5,5" />
                         </StackPanel>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
