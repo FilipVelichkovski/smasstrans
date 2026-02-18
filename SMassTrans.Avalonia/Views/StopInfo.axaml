@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:viewModels="clr-namespace:SMassTrans.Avalonia.ViewModels"
              xmlns:views="clr-namespace:SMassTrans.Avalonia.Views"
+             xmlns:lang="clr-namespace:SMassTrans.Avalonia.Lang"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SMassTrans.Avalonia.Views.StopInfo"
              x:DataType="viewModels:StopInfoModel">
@@ -31,8 +32,8 @@
                         <StackPanel Orientation="Horizontal" Background="DarkBlue" Margin="2"   PointerReleased="LinePointerReleased"  >
                             <StackPanel.ContextMenu>
                                 <ContextMenu>
-                                    <MenuItem Header="Show line in GPS" Click="LineGPS"/>
-                                    <MenuItem Header="View stops" Click="ViewStops"/>
+                                    <MenuItem Header="{x:Static lang:Resources.ShowLineInGPS}" Click="LineGPS"/>
+                                    <MenuItem Header="{x:Static lang:Resources.ViewStops}" Click="ViewStops"/>
 
                                 </ContextMenu>
                             </StackPanel.ContextMenu>

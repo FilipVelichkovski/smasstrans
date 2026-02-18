@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:viewModels="clr-namespace:SMassTrans.Avalonia.ViewModels"
              xmlns:views="clr-namespace:SMassTrans.Avalonia.Views"
+             xmlns:lang="clr-namespace:SMassTrans.Avalonia.Lang"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SMassTrans.Avalonia.Views.LineView">
     <UserControl.Resources>
@@ -24,9 +25,9 @@
                     <StackPanel Margin="2" Orientation="Horizontal" Tapped ="LineDoubleTapped" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                         <StackPanel.ContextMenu>
                             <ContextMenu>
-                                <MenuItem Header="GPS" Click="LineGPS"/>
-                                <MenuItem Header="Copy stops to clipboard" Click="CopyStops"/>
-                                <MenuItem Header="View stops" Click="ViewStops"/>
+                                <MenuItem Header="{x:Static lang:Resources.GPS}" Click="LineGPS"/>
+                                <MenuItem Header="{x:Static lang:Resources.CopyStopsToClipboard}" Click="CopyStops"/>
+                                <MenuItem Header="{x:Static lang:Resources.ViewStops}" Click="ViewStops"/>
                             </ContextMenu>
                         </StackPanel.ContextMenu>
                         <TextBlock Text="{Binding LineRouteId, Converter={StaticResource lineRouteIdConverter}}" FontSize="18" Padding="0,10,5,0" />
