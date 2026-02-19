@@ -16,22 +16,23 @@ cache:
 
 stages:
   - build
-
 build-desktop:
   stage: build
   script:
-    - 'apt update && apt -y install libfuse2 fuse file desktop-file-utils zsync appstream' 
-    - 'dotnet workload restore --project SMassTrans.Avalonia.Desktop/SMassTrans.Avalonia.Desktop.csproj --packages $NUGET_PACKAGES_DIRECTORY'
+    - 'apt update'
+    - 'apt -y install libfuse2 fuse file desktop-file-utils zsync appstream' 
+    - 'cd SMassTrans.Avalonia.Desktop/'
+    - 'dotnet workload restore --project SMassTrans.Avalonia.Desktop.csproj --packages $NUGET_PACKAGES_DIRECTORY'
     - 'dotnet restore --force --packages $NUGET_PACKAGES_DIRECTORY'
-    - 'dotnet publish SMassTrans.Avalonia.Desktop/SMassTrans.Avalonia.Desktop.csproj -c Release -r linux-x64 -f net8.0 --self-contained true'
-    - 'cd SMassTrans.Avalonia.Desktop/bin/Release/net8.0/linux-x64/'
+    - 'dotnet publish -c Release -r linux-x64 -f net8.0 --self-contained true'
+    - 'cd bin/Release/net8.0/linux-x64/'
     - 'bash ../../../../publish-appimg.sh'
-    - 'mkdir -p ../../../../out-linux'
-    - 'cp SMassTrans-x86_64.AppImage ../../../../out-linux/'
+    - 'mkdir -p ../../../../'
+    - 'cp SMassTrans-x86_64.AppImage ../../../../'
   artifacts:
     expire_in: 1 week  
     paths:
-      - 'out-linux/SMassTrans-x86_64.AppImage'
+      - 'SMassTrans-x86_64.AppImage'
 
 build-windows:
   stage: build
@@ -41,12 +42,11 @@ build-windows:
     - 'dotnet restore --force --packages ../$NUGET_PACKAGES_DIRECTORY'
     - 'dotnet publish -c Release -r win-x64 -f net8.0 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true'
     - 'cd ../'
-    - 'mkdir -p out-windows'
-    - 'cp SMassTrans.Avalonia.Desktop/bin/Release/net8.0/win-x64/publish/*.exe out-windows/'
+    - 'cp SMassTrans.Avalonia.Desktop/bin/Release/net8.0/win-x64/publish/*.exe .'
   artifacts:
     expire_in: 1 week
     paths:
-      - 'out-windows/'
+      - '*.exe'
 
 build-mobile:
   stage: build
@@ -65,9 +65,8 @@ build-mobile:
       -p:AndroidSdkDirectory=/usr/lib/android-sdk/ \
       -p:JavaSdkDirectory=$JAVA_HOME
     - 'cd ..'
-    - 'mkdir -p out-mobile'
-    - 'cp SMassTrans.Avalonia.Android/bin/Release/net10.0-android/publish/*.apk out-mobile/'
+    - 'cp SMassTrans.Avalonia.Android/bin/Release/net10.0-android/publish/*.apk .'
   artifacts:
     expire_in: 1 week
     paths:
-      - 'out-mobile/'
+      - '*.apk'
