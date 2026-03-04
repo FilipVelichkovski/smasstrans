@@ -5,6 +5,7 @@ variables:
   NUGET_PACKAGES_DIRECTORY: '.nuget'
   SOURCE_CODE_PATH: '*/*/'
   GIT_SUBMODULE_STRATEGY: recursive
+
 cache:
   key: "$CI_JOB_STAGE-$CI_COMMIT_REF_SLUG"
   paths:
@@ -13,30 +14,45 @@ cache:
     - '$NUGET_PACKAGES_DIRECTORY'
   policy: pull-push
 
+stages:
+  - build
 build-desktop:
   stage: build
   script:
-    - 'apt update'
-    - 'apt -y install libfuse2 fuse file desktop-file-utils zsync appstream' 
+    - 'apt update && apt -y install libfuse2 fuse file desktop-file-utils zsync appstream' 
     - 'cd SMassTrans.Avalonia.Desktop/'
-    - 'dotnet workload restore --project SMassTrans.Avalonia.Desktop.csproj --packages $NUGET_PACKAGES_DIRECTORY'
-    - 'dotnet restore --force --packages $NUGET_PACKAGES_DIRECTORY'
+    - 'dotnet workload restore --project SMassTrans.Avalonia.Desktop.csproj'
+    - 'dotnet restore --force'
     - 'dotnet publish -c Release -r linux-x64 -f net8.0 --self-contained true'
     - 'cd bin/Release/net8.0/linux-x64/'
     - 'bash ../../../../publish-appimg.sh'
+    - 'cp SMassTrans-x86_64.AppImage $CI_PROJECT_DIR/'
   artifacts:
     expire_in: 1 week  
     paths:
-      - 'SMassTrans.Avalonia.Desktop/bin/Release/net8.0/linux-x64/publish/'
-      - 'SMassTrans.Avalonia.Desktop/bin/Release/net8.0/linux-x64/SMassTrans-x86_64.AppImage'
+      - 'SMassTrans-x86_64.AppImage'
+
+build-windows:
+  stage: build
+  script:
+    - 'cd SMassTrans.Avalonia.Desktop/'
+    - 'dotnet workload restore --project SMassTrans.Avalonia.Desktop.csproj --packages ../$NUGET_PACKAGES_DIRECTORY'
+    - 'dotnet restore --force --packages ../$NUGET_PACKAGES_DIRECTORY'
+    - 'dotnet publish -c Release -r win-x64 -f net8.0 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true'
+    - 'cd ../'
+    - 'cp SMassTrans.Avalonia.Desktop/bin/Release/net8.0/win-x64/publish/*.exe .'
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - '*.exe'
 
 build-mobile:
   stage: build
   script:
     - 'cd SMassTrans.Avalonia.Android/'
-    - 'dotnet workload restore --project SMassTrans.Avalonia.Android.csproj --packages $NUGET_PACKAGES_DIRECTORY'
+    - 'dotnet workload restore --project SMassTrans.Avalonia.Android.csproj --packages ../$NUGET_PACKAGES_DIRECTORY'
     - 'echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > release-smassstrans.jks'
-    - 'dotnet restore --force --packages $NUGET_PACKAGES_DIRECTORY'
+    - 'dotnet restore --force --packages ../$NUGET_PACKAGES_DIRECTORY'
     - |
       dotnet publish -c Release -f net10.0-android --no-restore \
       -p:AndroidKeyStore=True \
@@ -47,9 +63,8 @@ build-mobile:
       -p:AndroidSdkDirectory=/usr/lib/android-sdk/ \
       -p:JavaSdkDirectory=$JAVA_HOME
     - 'cd ..'
-    - 'mkdir -p out-mobile'
-    - 'cp SMassTrans.Avalonia.Android/bin/Release/net10.0-android/publish/*.apk out-mobile/'
+    - 'cp SMassTrans.Avalonia.Android/bin/Release/net10.0-android/publish/*.apk .'
   artifacts:
     expire_in: 1 week
     paths:
-      - 'out-mobile/'
+      - '*.apk'
