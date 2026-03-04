@@ -9,6 +9,7 @@ using Mapsui.Fetcher;
 using Mapsui.Layers;
 using Mapsui.Projections;
 using Mapsui.Providers;
+using Mapsui.Styles;
 using SMassTrans.Shared;
 
 namespace SMassTrans.Avalonia.Views;
@@ -24,7 +25,7 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
         s.DataRecieved += (x, y) =>
         {
             #if DEBUG
-            var activeBuses = y.Infos.Where(x => x.Status == "COURSE_LEAVE" || x.Status == "COURSE_EXECUTE" || x.Status == "WAIT_STOP").ToList();
+            var activeBuses = y.Infos.Where(x => x.Status is "COURSE_LEAVE" or "COURSE_EXECUTE" or "WAIT_STOP").ToList();
             Debug.WriteLine(activeBuses.Count > 0
                 ? $"{y.Id} {activeBuses.Count}/{y.Infos.Count} buses going at avg {activeBuses.Select(x => x.Speed).Average()}km/h"
                 : $"{y.Id} {activeBuses.Count}/{y.Infos.Count}");
@@ -59,6 +60,10 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
         }
         var p = new Dictionary<string, object>();
         p["ID"] = x.Id;
+        if (x is Position pz)
+        {
+            p["#"] = pz.Vehicle.Name;
+        }
         p["Status"] = x.Status;
         p["Speed"] = x.Speed + "km/h";
         p["Delay"] = x.Delay;
@@ -67,25 +72,22 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
         p["StopId"] = x.StopId;
         p["RouteId"] = x.RouteId;
         p["CourseId"] = x.CourseId;
+        
         return p;
     }
     private List<IGpsInfo> infos = new();
-    /* public  MRect? GetExtent()
-     {
-         var a = SphericalMercator.FromLonLat(21.192293167114258, 42.15064239501953);
-         var b = SphericalMercator.FromLonLat(21.781400680541992, 41.800537109375);
-         return new MRect(a.x, a.y, b.x, b.y);
-     }*/
 
+   
     public override Task<IEnumerable<IFeature>> GetFeaturesAsync(FetchInfo fetchInfo)
     {
-        /*  PointFeature busFeature;
-          busFeature = new PointFeature(SphericalMercator.FromLonLat(_prevCoords.Lon, _prevCoords.Lat).ToMPoint());
-          */
         return Task.FromResult(infos.Select(x =>
         {
             var p = new PointFeature(SphericalMercator.FromLonLat(x.Lon, x.Lat).ToMPoint());
             p["ID"] = x.Id;
+            if (x is Position pz)
+            {
+                p["#"] = pz.Vehicle.Name;
+            }
             p["Status"] = x.Status;
             p["Speed"] = x.Speed + "km/h";
             p["Delay"] = x.Delay;

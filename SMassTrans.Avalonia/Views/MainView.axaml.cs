@@ -24,6 +24,7 @@ using Mapsui.Layers.AnimatedLayers;
 using Mapsui.Nts;
 using Mapsui.Projections;
 using Mapsui.Styles;
+using Mapsui.Styles.Thematics;
 using PolylineAlgorithm;
 using ReactiveUI;
 using SMassTrans.Avalonia.ViewModels;
@@ -292,17 +293,63 @@ public partial class MainView : UserControl
         layer = new AnimatedPointLayer(BusPointProvider)
         {
             Name = "Buses",
-            Style = new SymbolStyle()
+            Style = new ThemeStyle(f => 
             {
-                ImageSource = "embedded://SMassTrans.Avalonia.tiny2dbus.png",
-                SymbolScale = 1.0
-            },
+                // 1. Get the model from the feature's attributes
+                // We stored the ID/Model info in GetFeaturesAsync earlier
+                if (f["#"] is string vehicleName && int.TryParse(vehicleName, out var vehicleId))
+                {
+                    var model = BusFleet.GetFromId(vehicleId);
+                    return GetStyleForModel(model); // Your existing provider method
+                }
+        
+                // Fallback style
+                return GetStyleForModel(BusModel.Unknown);
+            }),
             IsMapInfoLayer = true
         };
         mapControl.Map?.Layers.Add(layer); 
         MapEn = true;  
+    } private static readonly Dictionary<BusModel, Style> StyleCache = new();
+
+    private Style GetStyleForModel(BusModel model)
+    {
+        if (StyleCache.TryGetValue(model, out var cachedStyle)) return cachedStyle;
+     
+        string imageName = model switch
+        {
+            BusModel.YutongZK6116HGSCityMaster => "tiny2dbus.png",
+           // BusModel.MANA23LionsCityGCNG => "bendy_bus.png",
+            BusModel.MANA23LionsCityGCNG => "aislopa23.png",
+            BusModel.MANA21LionsCityCNG => "aislopa21.png",
+            BusModel.BMCProcityII12CNG => "new.png",
+            BusModel.YutongZK6770HGA => "midibus.png",
+            _ => "no-pic" // Default
+        };
+        if (imageName == "no-pic" )
+        {
+            var s = new LabelStyle
+            {
+                BackColor = new Brush(Color.Black),
+                ForeColor = Color.White,
+                Text = "Bus",
+            };
+      
+            StyleCache[model] = s;
+            return s;
+        }
+
+       var style = new SymbolStyle
+        {
+            ImageSource = $"embedded://SMassTrans.Avalonia.{imageName}",
+            SymbolScale = 1.0
+        };
+      
+        StyleCache[model] = style;
+        return style;
     }
 
+  
     private void MapControl_PointerReleased(object? sender, PointerReleasedEventArgs e)
     {
         if (e.InitialPressMouseButton != MouseButton.Right) return;
@@ -372,22 +419,25 @@ public partial class MainView : UserControl
         {
             var x = BusPointProvider.GetInfo(SelectedBusFeatureID);
             var result = new StringBuilder();
-            foreach (var (field,data) in x)
+            if (x != null)
             {
-                result.Append(field);
-                result.Append(':');
-                result.Append(' ');
+                foreach (var (field,data) in x)
+                {
+                    result.Append(field);
+                    result.Append(':');
+                    result.Append(' ');
 
-                if (field == "StopId" &&  data is int xy)
-                {
-                    result.Append($" {xy}.{client.GetStop(xy.ToString("0000")).GetAwaiter().GetResult().StopName} - ");
+                    if (field == "StopId" &&  data is int xy)
+                    {
+                        result.Append($" {xy}.{client.GetStop(xy.ToString("0000")).GetAwaiter().GetResult().StopName} - ");
+                    }
+                    else
+                    {
+                        result.Append($" {data} - ");
+                    }
                 }
-                else
-                {
-                    result.Append($" {data} - ");
-                }
+                result.Remove(result.Length - 2, 2);  
             }
-            result.Remove(result.Length - 2, 2);
             var resultx = result.ToString();
             Dispatcher.UIThread.Invoke(() =>
             {

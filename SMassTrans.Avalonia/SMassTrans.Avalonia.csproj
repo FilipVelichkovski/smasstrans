@@ -37,6 +37,14 @@
       <StronglyTypedNamespace>SMassTrans.Avalonia.Lang</StronglyTypedNamespace>
       <StronglyTypedClassName>Resources</StronglyTypedClassName>
     </EmbeddedResource>
+    <None Remove="midibus.png" />
+    <EmbeddedResource Include="midibus.png" />
+    <None Remove="new.png" />
+    <EmbeddedResource Include="new.png" />
+    <None Remove="aislopa21.png" />
+    <EmbeddedResource Include="aislopa21.png" />
+    <None Remove="aislopa23.png" />
+    <EmbeddedResource Include="aislopa23.png" />
   </ItemGroup>
 
   <ItemGroup>
