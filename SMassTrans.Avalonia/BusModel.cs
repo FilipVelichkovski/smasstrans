@@ -41,7 +41,7 @@ public enum BusModel
     /// </summary>
     MANA21LionsCityCNG,
     /// <summary>
-    /// 2020 man bendy buesses
+    /// 2020 man bendy busses
     /// </summary>
     MANA23LionsCityGCNG,
     /// <summary>
@@ -68,11 +68,11 @@ public class BusFleet
         }
         AddRange(101, 116, BusModel.YutongZK6770HGA);
         AddRange(1001, 1080, BusModel.LAZA183CityLAZ);
-        AddRange(1081, 1286, BusModel.YutongZK6116HGSCityMaster);
+        AddRange(1081, 1287, BusModel.YutongZK6116HGSCityMaster);
         AddRange(2001, 2016, BusModel.YutongZK6116HGSCityMaster);
-        AddRange(2101, 2121, BusModel.MANA21LionsCityCNG);
-        AddRange(2122, 2123, BusModel.MANA23LionsCityGCNG); // Articulated
-        AddRange(2124, 2134, BusModel.MANA21LionsCityCNG);
+        AddRange(2101, 2120, BusModel.MANA21LionsCityCNG); 
+        AddRange(2122, 2133, BusModel.MANA23LionsCityGCNG);
+        fleet[2134] = BusModel.MANA21LionsCityCNG;       
         AddRange(3001, 3006, BusModel.BMCProcityII12CNG);
         return fleet;
     }
