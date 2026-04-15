@@ -5,6 +5,7 @@
              xmlns:viewModels="clr-namespace:SMassTrans.Avalonia.ViewModels"
              xmlns:views="clr-namespace:SMassTrans.Avalonia.Views"
              xmlns:lang="clr-namespace:SMassTrans.Avalonia.Lang"
+             xmlns:local="clr-namespace:SMassTrans.Avalonia"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SMassTrans.Avalonia.Views.StopInfo"
              x:DataType="viewModels:StopInfoModel">
@@ -33,8 +34,8 @@
                             <StackPanel.ContextMenu>
                                 <ContextMenu>
                                     <MenuItem Header="{x:Static lang:Resources.ShowLineInGPS}" Click="LineGPS"/>
+                                    <MenuItem Header="Track Route" Click="TrackRoute" IsVisible="{Binding Source={x:Static local:LocationGatherer.HasGps}}"/>
                                     <MenuItem Header="{x:Static lang:Resources.ViewStops}" Click="ViewStops"/>
-
                                 </ContextMenu>
                             </StackPanel.ContextMenu>
                             <TextBlock Text="{Binding LineAndRoute, Converter={StaticResource lineRouteIdConverter}}" FontSize="18" Margin="5,5,10,5" />

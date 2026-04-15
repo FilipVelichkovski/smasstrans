@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -121,6 +122,33 @@ public partial class StopInfo : UserControl
             };
             _mainViewModel.GoForward(bsource, newpage);
         }
+    }
+
+    private async void TrackRoute(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Control { DataContext: UpcomingBusOnStop bus }) return;
+        if (_mainViewModel.RouteTrackingService == null)
+        {
+            Debug.WriteLine("Route tracking service not initialized");
+            return;
+        }
+
+        var routeInfo = _mainViewModel.client.GetRouteInfo(bus.LineAndRoute).GetAwaiter().GetResult();
+        var routeStops = routeInfo.StopIds
+            .Select(x => _mainViewModel.client.GetStop(x).GetAwaiter().GetResult())
+            .OfType<SkopskaStop>()
+            .ToList();
+
+        var trackingViewModel = new UserRouteTrackingViewModel(_mainViewModel.RouteTrackingService);
+        var trackingView = new UserRouteTrackingView
+        {
+            DataContext = trackingViewModel
+        };
+
+        _mainViewModel.GoForward(bsource == Tab.Stop ? Tab.RouteTracking : Tab.RouteTracking, trackingView);
+        
+        // Start tracking the route
+        await trackingViewModel.StartTrackingAsync(routeInfo, routeStops);
     }
 
 }

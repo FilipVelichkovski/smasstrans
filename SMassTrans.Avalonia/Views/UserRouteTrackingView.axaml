@@ -1,0 +1,84 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:SMassTrans.Avalonia.ViewModels"
+             xmlns:lang="clr-namespace:SMassTrans.Avalonia.Lang"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="SMassTrans.Avalonia.Views.UserRouteTrackingView"
+             x:DataType="viewModels:UserRouteTrackingViewModel">
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <!-- Route Header -->
+        <Border Grid.Row="0" Background="#2196F3" Padding="15" Margin="2">
+            <StackPanel Orientation="Vertical">
+                <TextBlock Text="{Binding RouteDisplay}" FontSize="24" FontWeight="Bold" Foreground="White"/>
+                <TextBlock Text="{Binding StatusMessage}" FontSize="14" Foreground="WhiteSmoke" Margin="0,5,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Current Stop Card -->
+        <Border Grid.Row="1" Margin="2" Background="#F5F5F5" Padding="10" BorderThickness="1" BorderBrush="#E0E0E0">
+            <StackPanel IsVisible="{Binding CurrentStop, Converter={x:Static ObjectConverters.IsNotNull}}">
+                <TextBlock Text="Next Stop:" FontSize="12" FontWeight="Bold" Foreground="#666"/>
+                <TextBlock Text="{Binding CurrentStop.Stop.StopName}" FontSize="18" FontWeight="Bold" Margin="0,5,0,0"/>
+                <Grid ColumnDefinitions="*,*" Margin="0,8,0,0">
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Distance" FontSize="11" Foreground="#999"/>
+                        <TextBlock Text="{Binding CurrentStop.DistanceDisplay}" FontSize="16" FontWeight="Bold" Foreground="#1976D2"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Text="Status" FontSize="11" Foreground="#999"/>
+                        <TextBlock Text="{Binding CurrentStop.StatusDisplay}" FontSize="16" FontWeight="Bold" 
+                                   Foreground="#1976D2"/>
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <!-- Upcoming Stops List -->
+        <ListBox Grid.Row="2" ItemsSource="{Binding UpcomingStops}" Margin="2">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Border BorderBrush="#E0E0E0" BorderThickness="0,1,0,0" Padding="10">
+                        <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                            <!-- Stop Number/Index -->
+                            <Ellipse Grid.Column="0" Width="35" Height="35" 
+                                    Fill="#1976D2"
+                                    Margin="0,0,10,0"/>
+                            <TextBlock Grid.Column="0" Text="{Binding Stop.StopNum}" 
+                                      VerticalAlignment="Center" HorizontalAlignment="Center"
+                                      Foreground="White" FontWeight="Bold"/>
+
+                            <!-- Stop Info -->
+                            <StackPanel Grid.Column="1" Orientation="Vertical" Margin="0">
+                                <TextBlock Text="{Binding Stop.StopName}" FontSize="14" FontWeight="Bold"/>
+                                <TextBlock Text="{Binding Stop.StopId, StringFormat='ID: {0}'}" 
+                                          FontSize="11" Foreground="#999"/>
+                            </StackPanel>
+
+                            <!-- Distance -->
+                            <StackPanel Grid.Column="2" Orientation="Vertical" HorizontalAlignment="Right" Margin="10,0">
+                                <TextBlock Text="Distance" FontSize="11" Foreground="#999" TextAlignment="Right"/>
+                                <TextBlock Text="{Binding DistanceDisplay}" FontSize="13" FontWeight="Bold" TextAlignment="Right"/>
+                            </StackPanel>
+
+                            <!-- Status Badge -->
+                            <Border Grid.Column="3" Background="#1976D2" 
+                                   CornerRadius="4" Padding="8,4" Margin="5,0,0,0">
+                                <TextBlock Text="{Binding StatusDisplay}" Foreground="White" FontSize="11" FontWeight="Bold"/>
+                            </Border>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <!-- Control Buttons -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="2" Spacing="10">
+            <Button Content="Stop Tracking" Click="StopTrackingClick" 
+                   Background="#F44336" Foreground="White" Padding="15,10"/>
+            <Button Content="Refresh" Click="RefreshClick"
+                   Background="#2196F3" Foreground="White" Padding="15,10"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

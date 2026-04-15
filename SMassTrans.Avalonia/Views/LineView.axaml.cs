@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Text;
+using System.Diagnostics;
 using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -60,6 +61,33 @@ public partial class LineView : UserControl
                 LinePageStops = stops,
             }
         });
+    }
+
+    private async void TrackRoute(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Control { DataContext: IRouteInfo context }) return;
+        if (context is not RouteInfo routeInfo || DataContext is not MainViewModel mainViewModel) return;
+        if (mainViewModel.RouteTrackingService == null)
+        {
+            Debug.WriteLine("Route tracking service not initialized");
+            return;
+        }
+
+        var stops = routeInfo.StopIds
+            .Select(x => mainViewModel.client.GetStop(x).GetAwaiter().GetResult())
+            .OfType<SkopskaStop>()
+            .ToList();
+
+        var trackingViewModel = new UserRouteTrackingViewModel(mainViewModel.RouteTrackingService);
+        var trackingView = new UserRouteTrackingView
+        {
+            DataContext = trackingViewModel
+        };
+
+        mainViewModel.GoForward(Tab.RouteTracking, trackingView);
+        
+        // Start tracking the route
+        await trackingViewModel.StartTrackingAsync(routeInfo, stops);
     }
 
     private void TextBox_OnTextChanged(object? sender, TextChangedEventArgs e)

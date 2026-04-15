@@ -5,9 +5,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Collections;
@@ -28,6 +30,7 @@ using Mapsui.Styles.Thematics;
 using PolylineAlgorithm;
 using ReactiveUI;
 using SMassTrans.Avalonia.ViewModels;
+using SMassTrans.Avalonia.Views;
 using SMassTrans.Shared;
 using Brush = Mapsui.Styles.Brush;
 using Color = Mapsui.Styles.Color;
@@ -59,6 +62,7 @@ public partial class MainView : UserControl
     }
     public MainView()
     {
+        Debug.WriteLine("=== MainView constructor START ===");
         DataContext = model;
         InitializeComponent();
         TabCtl = this.FindControl<TabControl>("TabCtl");
@@ -67,6 +71,14 @@ public partial class MainView : UserControl
         model.client = client;
         mapdata = this.FindControl<TextBlock>("mapdata");
         MainViewModel.SetGpsLine += SetGpsLine;
+        
+        // Initialize route tracking service if GPS is available
+        Debug.WriteLine($"MainView: About to check HasGps = {LocationGatherer.HasGps}");
+        if (LocationGatherer.HasGps)
+        {
+            Debug.WriteLine("MainView: HasGps is true, calling InitializeRouteTracking");
+            InitializeRouteTracking();
+        }
         Refresh();
         if (Application.Current.TryGetFeature<IActivatableLifetime>() is { } activatableLifetime)
         {
@@ -89,6 +101,49 @@ public partial class MainView : UserControl
                     StopMap();
                 }
             };
+        }
+    }
+
+    private void InitializeRouteTracking()
+    {
+        try
+        {
+            Debug.WriteLine("=== InitializeRouteTracking: Starting ===");
+            Debug.WriteLine($"HasGps = {LocationGatherer.HasGps}");
+            Debug.WriteLine("Calling GetLocationTracker()...");
+            IUserLocationTracker? tracker =  LocationGatherer.GetLocationTracker();
+            Debug.WriteLine($"First call result: {(tracker == null ? "NULL" : "OK")}");
+            while (tracker == null)
+            {
+                Debug.WriteLine("Retrying GetLocationTracker()...");
+                tracker = LocationGatherer.GetLocationTracker();
+                Thread.Sleep(500);
+                Debug.WriteLine($"Retry result: {(tracker == null ? "NULL" : "OK")}");
+            }
+            if (tracker != null)
+            {
+                Debug.WriteLine("InitializeRouteTracking: Creating RouteTrackingService...");
+                var routeTrackingService = new RouteTrackingService(tracker);
+                model.RouteTrackingService = routeTrackingService;
+                
+                // Create the selection view with the service and main view model
+                var selectionViewModel = new RouteTrackingSelectionViewModel(client, routeTrackingService, model);
+                var selectionView = new RouteTrackingSelectionView
+                {
+                    DataContext = selectionViewModel
+                };
+                model.RouteTrackingPage = selectionView;
+                
+                Debug.WriteLine("=== InitializeRouteTracking: SUCCESS ===");
+            }
+            else
+            {
+                Debug.WriteLine("=== InitializeRouteTracking: FAILED - location tracker not available ===");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"=== InitializeRouteTracking: ERROR - {ex} ===");
         }
     }
     
@@ -245,6 +300,7 @@ public partial class MainView : UserControl
                 {
                     Line = new Pen
                     {
+                        
                         Color = new Color(255, 0, 0, 100), 
                         Width = 10,
                         PenStrokeCap = PenStrokeCap.Round,
@@ -306,13 +362,13 @@ public partial class MainView : UserControl
                 // Fallback style
                 return GetStyleForModel(BusModel.Unknown);
             }),
-            IsMapInfoLayer = true
+            //IsMapInfoLayer = true
         };
         mapControl.Map?.Layers.Add(layer); 
         MapEn = true;  
-    } private static readonly Dictionary<BusModel, Style> StyleCache = new();
+    } private static readonly Dictionary<BusModel, BaseStyle> StyleCache = new();
 
-    private Style GetStyleForModel(BusModel model)
+    private BaseStyle GetStyleForModel(BusModel model)
     {
         if (StyleCache.TryGetValue(model, out var cachedStyle)) return cachedStyle;
      
@@ -339,9 +395,9 @@ public partial class MainView : UserControl
             return s;
         }
 
-       var style = new SymbolStyle
+       var style = new ImageStyle()
         {
-            ImageSource = $"embedded://SMassTrans.Avalonia.{imageName}",
+            Image = $"embedded://SMassTrans.Avalonia.{imageName}",
             SymbolScale = 1.0
         };
       
@@ -354,7 +410,7 @@ public partial class MainView : UserControl
     {
         if (e.InitialPressMouseButton != MouseButton.Right) return;
         var screenPosition = e.GetPosition(mapControl);
-        var mapInfo = mapControl.GetMapInfo(new Mapsui.Manipulations.ScreenPosition(screenPosition.X, screenPosition.Y));
+        var mapInfo = mapControl.GetMapInfo(new Mapsui.Manipulations.ScreenPosition(screenPosition.X, screenPosition.Y),[]);
         if (mapInfo?.WorldPosition != null)
         {
             var wpObj = mapInfo.WorldPosition;
@@ -399,19 +455,19 @@ public partial class MainView : UserControl
     private string? SelectedBusFeatureID = null;
     private void OnMapInfo(object? sender, MapInfoEventArgs e)
     {
-        
-        if (e.MapInfo is not null)
+        var mapInfo = e.GetMapInfo([layer]);
+        if (mapInfo is not null)
         {
-            if (e.MapInfo.Feature ==null)
+            if (mapInfo.Feature ==null)
             {
                 SelectedBusFeatureID = null;
             }
             else
             {
-                SelectedBusFeatureID = (string)e.MapInfo.Feature["ID"];
+                SelectedBusFeatureID = (string)mapInfo.Feature["ID"];
             }
         }
-        mapdata.Text = FeatureToText(e.MapInfo?.Feature);
+        mapdata.Text = FeatureToText(mapInfo?.Feature);
     }
     private void UpdateFeatureText(object? sender, EventArgs e)
     {

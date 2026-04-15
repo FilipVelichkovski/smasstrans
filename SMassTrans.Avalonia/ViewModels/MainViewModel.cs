@@ -11,7 +11,8 @@ public enum Tab
 {
     Stop,
     StopGPS,
-    Line
+    Line,
+    RouteTracking
 }
 public class MainViewModel : ViewModelBase
 {
@@ -47,6 +48,20 @@ public class MainViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref _linePage, value);
     }
 
+    private RouteTrackingService _routeTrackingService;
+    public RouteTrackingService RouteTrackingService
+    {
+        get => _routeTrackingService;
+        set => this.RaiseAndSetIfChanged(ref _routeTrackingService, value);
+    }
+
+    private Control _routeTrackingPage =null;
+    public Control RouteTrackingPage
+    {
+        get => _routeTrackingPage;
+        set => this.RaiseAndSetIfChanged(ref _routeTrackingPage, value);
+    }
+
     public void GoBack(Tab tab)
     {
         switch (tab)
@@ -59,6 +74,9 @@ public class MainViewModel : ViewModelBase
                 break;
             case Tab.Line:
                 LinePage = PrevLinePages.Pop();
+                break;
+            case Tab.RouteTracking:
+                RouteTrackingPage = PrevRouteTrackingPages.Pop();
                 break;
         }
     }
@@ -78,10 +96,15 @@ public class MainViewModel : ViewModelBase
                 PrevLinePages.Push( LinePage);
                 LinePage=next;
                 break;
+            case Tab.RouteTracking:
+                PrevRouteTrackingPages.Push(RouteTrackingPage);
+                RouteTrackingPage = next;
+                break;
         }
     }
     
     public Stack<Control> PrevLinePages=new();
+    public Stack<Control> PrevRouteTrackingPages=new();
 
     private Control? _routeFindPage = new SMassTrans.Avalonia.Views.RouteFindView();
     public Control? RouteFindPage
@@ -108,6 +131,12 @@ public class MainViewModel : ViewModelBase
     {
         get => _routeTo;
         set => this.RaiseAndSetIfChanged(ref _routeTo, value);
+    }
+
+    public MainViewModel()
+    {
+        // Initialize route tracking service (will be set properly by the view)
+        _routeTrackingService = null;
     }
 }
 

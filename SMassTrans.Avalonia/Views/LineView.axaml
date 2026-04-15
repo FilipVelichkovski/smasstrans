@@ -5,6 +5,7 @@
              xmlns:viewModels="clr-namespace:SMassTrans.Avalonia.ViewModels"
              xmlns:views="clr-namespace:SMassTrans.Avalonia.Views"
              xmlns:lang="clr-namespace:SMassTrans.Avalonia.Lang"
+             xmlns:local="clr-namespace:SMassTrans.Avalonia"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SMassTrans.Avalonia.Views.LineView">
     <UserControl.Resources>
@@ -26,6 +27,7 @@
                         <StackPanel.ContextMenu>
                             <ContextMenu>
                                 <MenuItem Header="{x:Static lang:Resources.GPS}" Click="LineGPS"/>
+                                <MenuItem Header="Track Route" Click="TrackRoute" IsVisible="{Binding Source={x:Static local:LocationGatherer.HasGps}}"/>
                                 <MenuItem Header="{x:Static lang:Resources.CopyStopsToClipboard}" Click="CopyStops"/>
                                 <MenuItem Header="{x:Static lang:Resources.ViewStops}" Click="ViewStops"/>
                             </ContextMenu>

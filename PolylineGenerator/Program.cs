@@ -33,8 +33,6 @@ async Task<List<string>> GetFullRouteShape(List<string> stopIds)
         locations = locations,
         costing = "bus",
         units = "kilometers",
-        rank_candidates = false,
-        search_radius = 250,
         // 'osrm' or 'polyline6' are common. Valhalla default is polyline6 (6 decimal precision)
     };
 
