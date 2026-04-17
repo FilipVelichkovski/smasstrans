@@ -28,7 +28,7 @@ public class MainActivity : AvaloniaMainActivity<App>
     public MainActivity()
     {
         SystemDebug.WriteLine("=== MainActivity constructor START ===");
-        
+        HttpClientHandler.UseNativePlatformHandler = false;
         LocationGatherer.GetLoc = async () =>
         {
             GeolocationRequest request = new GeolocationRequest(GeolocationAccuracy.Best, TimeSpan.FromSeconds(2));
