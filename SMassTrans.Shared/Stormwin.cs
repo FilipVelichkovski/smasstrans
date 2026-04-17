@@ -15,7 +15,12 @@ public class Stormwin : IGps
     async Task Com(CancellationToken cancellationToken)
     {
         Uri uri = new("wss://jspotg.stormwin.mk");
-
+         ws.Options.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => 
+    {
+        // For debugging/safety, you could check if it's ONLY an expired error
+        // but returning true ignores ALL validation errors.
+        return true; 
+    };
         await ws.ConnectAsync(uri, cancellationToken);
         while (!cancellationToken.IsCancellationRequested)
         {
