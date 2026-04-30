@@ -41,7 +41,7 @@ public partial class StopSelectionLine : UserControl
         if (_mainViewModel is not MainViewModel mwv) return;
         if (!string.IsNullOrWhiteSpace(SearchBox.Text))
         {
-            mwv.Stops = new AvaloniaList<IStop>(mwv.Stops.OrderBy(x => Search.ModifiedLevenshteinDistance(x.StopName.ToLowerInvariant(),SearchBox.Text.ToLowerInvariant()))); ;
+            mwv.Stops = new AvaloniaList<IStop>(mwv.Stops.OrderBy(x => Search.ModifiedLevenshteinDistance(x.StopName.ToLowerInvariant(),SearchBox.Text.ToLowerInvariant()))); 
         }
         else
         {

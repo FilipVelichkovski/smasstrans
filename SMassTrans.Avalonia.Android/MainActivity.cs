@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Net.Http;
 using Android.App;
 using Android.Content;
 using Android.Content.PM;
@@ -28,7 +29,7 @@ public class MainActivity : AvaloniaMainActivity<App>
     public MainActivity()
     {
         SystemDebug.WriteLine("=== MainActivity constructor START ===");
-        HttpClientHandler.UseNativePlatformHandler = false;
+       
         LocationGatherer.GetLoc = async () =>
         {
             GeolocationRequest request = new GeolocationRequest(GeolocationAccuracy.Best, TimeSpan.FromSeconds(2));
@@ -99,27 +100,7 @@ public class MainActivity : AvaloniaMainActivity<App>
         // MAUI Geolocation API handles permissions internally
     }
 }
-[Service(ForegroundServiceType = ForegroundService.TypeLocation)]
-public class LocationService : Service
-{
-    public override StartCommandResult OnStartCommand(Intent intent, StartCommandFlags flags, int startId)
-    {
-        var channelId = "route_tracking";
-        // Create the notification that keeps the service alive
-        var notification = new NotificationCompat.Builder(this, channelId)
-            .SetContentTitle("SMassTrans")
-            .SetContentText("Route tracking active...")
-            .SetSmallIcon(Resource.Drawable.ic_launcher_foreground)
-            .SetOngoing(true)
-            .Build();
 
-        StartForeground(1001, notification);
-
-        return StartCommandResult.Sticky;
-    }
-
-    public override IBinder OnBind(Intent intent) => null;
-}
 public class MauiApplication : Microsoft.Maui.Controls.Application
 {
     

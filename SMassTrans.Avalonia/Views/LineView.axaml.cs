@@ -102,7 +102,7 @@ public partial class LineView : UserControl
                 var lineInfo = mwv.client.GetLineInfo(x.LineRouteId).GetAwaiter().GetResult();
                 var distance2 = Search.ModifiedLevenshteinDistance(lineInfo.Name.ToLowerInvariant(), searchTerm);
                 return Math.Min(distance1, distance2);
-            })); ;
+            })); 
         }
         else
         {

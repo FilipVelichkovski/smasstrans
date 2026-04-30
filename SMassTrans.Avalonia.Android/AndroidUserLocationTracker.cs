@@ -3,12 +3,14 @@ using System.Threading.Tasks;
 using SMassTrans.Shared;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Devices.Sensors;
+using Android.Content;
+using Android.OS;
 using Debug = System.Diagnostics.Debug;
 
 namespace SMassTrans.Avalonia.Android;
 
 /// <summary>
-/// Native implementation of user location tracking using MAUI Geolocation API
+/// Native implementation of user location tracking using a foreground service
 /// </summary>
 public class AndroidUserLocationTracker : IUserLocationTracker, IDisposable
 {
@@ -41,25 +43,22 @@ public class AndroidUserLocationTracker : IUserLocationTracker, IDisposable
     {
         try
         {
-            Debug.WriteLine("StartListeningAsync: Starting foreground location listening...");
+            Debug.WriteLine("StartListeningAsync: Starting foreground location service...");
             _isTracking = true;
 
-            Geolocation.LocationChanged += Geolocation_LocationChanged;
+            LocationService.LocationChanged += Service_LocationChanged;
 
-            var request = new GeolocationListeningRequest(GeolocationAccuracy.Best);
-            request.MinimumTime = TimeSpan.FromSeconds(1);
-            
-            var success = await Geolocation.StartListeningForegroundAsync(request);
-
-            if (success)
+            var intent = new Intent(Platform.AppContext, typeof(LocationService));
+            if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
             {
-                Debug.WriteLine("Started listening for foreground location updates");
+                Platform.AppContext.StartForegroundService(intent);
             }
             else
             {
-                Debug.WriteLine("Couldn't start listening for location updates");
-                _isTracking = false;
+                Platform.AppContext.StartService(intent);
             }
+
+            Debug.WriteLine("Requested LocationService to start");
         }
         catch (Exception ex)
         {
@@ -68,41 +67,14 @@ public class AndroidUserLocationTracker : IUserLocationTracker, IDisposable
         }
     }
 
-    private void Geolocation_LocationChanged(object sender, GeolocationLocationChangedEventArgs e)
+    private void Service_LocationChanged(object sender, UserLocation newLocation)
     {
-        if (e?.Location == null)
-            return;
-
-        var location = e.Location;
-        var newLocation = new UserLocation
-        {
-            Latitude = location.Latitude,
-            Longitude = location.Longitude,
-            Timestamp = DateTime.UtcNow,
-            Accuracy = (float)location.Accuracy
-        };
-
         bool shouldUpdate = false;
 
         lock (_locationLock)
         {
-            if (_currentLocation == null)
-            {
-                shouldUpdate = true;
-            }
-            else
-            {
-               /* double distance = CoordinateHelper.GetDistanceTo(
-                    _currentLocation.Latitude,
-                    _currentLocation.Longitude,
-                    newLocation.Latitude,
-                    newLocation.Longitude);*/
-
-                //if (distance >= 2) // DISTANCE_THRESHOLD_METERS
-                {
-                    shouldUpdate = true;
-                }
-            }
+            // We could add distance filtering here if needed
+            shouldUpdate = true;
 
             if (shouldUpdate)
             {
@@ -112,7 +84,7 @@ public class AndroidUserLocationTracker : IUserLocationTracker, IDisposable
 
         if (!shouldUpdate) return;
         LocationUpdated?.Invoke(this, newLocation);
-        Debug.WriteLine($"Location updated: {newLocation.Latitude}, {newLocation.Longitude}, Accuracy: {location.Accuracy}m");
+        Debug.WriteLine($"Location updated from service: {newLocation.Latitude}, {newLocation.Longitude}");
     }
 
     public Task StopTrackingAsync()
@@ -123,13 +95,16 @@ public class AndroidUserLocationTracker : IUserLocationTracker, IDisposable
         try
         {
             _isTracking = false;
-            Geolocation.LocationChanged -= Geolocation_LocationChanged;
-            Geolocation.StopListeningForeground();
-            Debug.WriteLine("Location tracking stopped");
+            LocationService.LocationChanged -= Service_LocationChanged;
+            
+            var intent = new Intent(Platform.AppContext, typeof(LocationService));
+            Platform.AppContext.StopService(intent);
+            
+            Debug.WriteLine("Location tracking service stopped");
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Error stopping location tracking: {ex}");
+            Debug.WriteLine($"Error stopping location tracking service: {ex}");
         }
 
         return Task.CompletedTask;
