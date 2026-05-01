@@ -5,15 +5,11 @@ namespace SMassTrans.Avalonia.ViewModels;
 
 public class RouteFindViewModel : ViewModelBase
 {
-    private Control? _routeFindContent = null;
+    private Control? _routeFindContent;
     public Control? RouteFindContent
     {
         get => _routeFindContent;
         set => this.RaiseAndSetIfChanged(ref _routeFindContent, value);
     }
 
-    public RouteFindViewModel()
-    {
-        // Initialize with a default view if needed
-    }
 }

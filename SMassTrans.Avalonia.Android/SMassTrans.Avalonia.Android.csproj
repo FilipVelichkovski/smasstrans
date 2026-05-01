@@ -5,8 +5,8 @@
         <OutputType>Exe</OutputType>
         <Nullable>enable</Nullable>
         <ApplicationId>silvercraft.SMassTrans.Avalonia</ApplicationId>
-        <ApplicationVersion>24</ApplicationVersion>
-        <ApplicationDisplayVersion>24.0</ApplicationDisplayVersion>
+        <ApplicationVersion>25</ApplicationVersion>
+        <ApplicationDisplayVersion>25.0</ApplicationDisplayVersion>
         <AndroidPackageFormat>apk</AndroidPackageFormat>
         <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
         <UseMaui>true</UseMaui>

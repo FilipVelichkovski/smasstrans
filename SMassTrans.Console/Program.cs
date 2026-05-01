@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using SMassTrans.Console;
 using SMassTrans.Shared;
 
 
@@ -6,7 +7,7 @@ using SMassTrans.Shared;
 HttpClient hclient = new();
 var client = new Skopska(hclient);
 await client.InitAsync();
-var app = new BusStopCLIApp(client);
+var app = new BusStopCliApp(client);
 
 await app.InitializeAsync();
 var stopNameQuery = await app.AutocompleteSearchAsync();

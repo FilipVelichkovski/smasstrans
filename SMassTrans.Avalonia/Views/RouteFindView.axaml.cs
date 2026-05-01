@@ -85,7 +85,7 @@ public partial class RouteFindView : UserControl
         }
 
         var routeFinder = new RouteFinder();
-        var lines = await model.client.GetAllLineInfo();
+        var lines = (await model.client.GetAllLineInfo()).ToList();
         var paths = await routeFinder.FindPathAsync(start, end, model.client, lines);
         if (paths.Count == 0)
         {

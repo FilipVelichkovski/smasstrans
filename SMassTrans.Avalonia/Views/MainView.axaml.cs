@@ -42,7 +42,7 @@ public partial class MainView : UserControl
 {
     private MainViewModel model = new();
     public static Skopska client;
-    bool Inited = false;
+    bool Inited;
     Mapsui.UI.Avalonia.MapControl mapControl;
     private BusPointProvider BusPointProvider;
     private LineRouteId? selectedBusLine;
@@ -67,7 +67,7 @@ public partial class MainView : UserControl
         InitializeComponent();
         TabCtl = this.FindControl<TabControl>("TabCtl");
         mapTabGrid = this.FindControl<Grid>("mapTabGrid");
-        client = new Skopska(new());
+        client = new Skopska(App.HttpClient);
         model.client = client;
         mapdata = this.FindControl<TextBlock>("mapdata");
         MainViewModel.SetGpsLine += SetGpsLine;
@@ -225,27 +225,70 @@ public partial class MainView : UserControl
     }
 
     private Dictionary<string, List<string>> Geometry = new();
+    FileBackedCache<string> GeometryJSON = new(TimeSpan.FromDays(31), "RouteGeometry", true);
     void LoadGeometry()
     {
-        try
-        {
-            var assembly = Assembly.GetExecutingAssembly();
-            var resourceName = "SMassTrans.Avalonia.fullRouteGeometries.json";
-            using Stream? stream = assembly.GetManifestResourceStream(resourceName);
-            if (stream == null)
+        bool success = false;
+        if (GeometryJSON.IsValid && !string.IsNullOrWhiteSpace(GeometryJSON.Value))
+        {   
+            try
             {
-                var names = assembly.GetManifestResourceNames();
-                Debug.WriteLine("Resource not found. Available resources: " + string.Join(", ", names));
-                return;
+                Debug.WriteLine("Valid file/mem cache for routeinfo");
+                Geometry = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(GeometryJSON.Value);
             }
-            using StreamReader reader = new StreamReader(stream);
-            string json = reader.ReadToEnd();
-            Geometry = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(json);
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error loading embedded geometry: {ex.Message}");
+            }
+            success = true;
         }
-        catch (Exception ex)
+        else
         {
-            Debug.WriteLine($"Error loading embedded geometry: {ex.Message}");
+            if (App.Config.RouteGeometry != null)
+            {
+                Debug.WriteLine("invalid file/mem cache for routeinfo, fetching");
+                try
+                {
+                    var res = Task.Run(async ()=> await App.HttpClient.GetStringAsync(App.Config.RouteGeometry));
+                    GeometryJSON.Value = res.GetAwaiter().GetResult();
+                    Geometry = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(GeometryJSON.Value);
+                    success = true;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+            }
         }
+
+        if (!success)
+        {
+            try
+            {
+                Debug.WriteLine("Error loading mem/file cached and external geo");
+                #if DEBUG
+                Debugger.Break();
+                #endif
+                var assembly = Assembly.GetExecutingAssembly();
+                var resourceName = "SMassTrans.Avalonia.fullRouteGeometries.json";
+                using Stream? stream = assembly.GetManifestResourceStream(resourceName);
+                if (stream == null)
+                {
+                    var names = assembly.GetManifestResourceNames();
+                    Debug.WriteLine("Resource not found. Available resources: " + string.Join(", ", names));
+                    return;
+                }
+                using StreamReader reader = new StreamReader(stream);
+                string json = reader.ReadToEnd();
+                Geometry = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(json);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error loading embedded geometry: {ex.Message}");
+            }
+        }
+        
     }
     private IEnumerable<(double Latitude, double Longitude)> DecodePrecision6(string polyline)
     {
@@ -339,6 +382,7 @@ public partial class MainView : UserControl
             }
             catch (Exception e)
             {
+                Debug.WriteLine(e.Message);
             }
         };
         mapTabGrid.Children.Add(mapControl);
@@ -351,16 +395,10 @@ public partial class MainView : UserControl
             Name = "Buses",
             Style = new ThemeStyle(f => 
             {
-                // 1. Get the model from the feature's attributes
-                // We stored the ID/Model info in GetFeaturesAsync earlier
-                if (f["#"] is string vehicleName && int.TryParse(vehicleName, out var vehicleId))
-                {
-                    var model = BusFleet.GetFromId(vehicleId);
-                    return GetStyleForModel(model); // Your existing provider method
-                }
-        
-                // Fallback style
-                return GetStyleForModel(BusModel.Unknown);
+                if (f["#"] is not string vehicleName || !int.TryParse(vehicleName, out var vehicleId))
+                    return GetStyleForModel(BusModel.Unknown);
+                var busModel = BusFleet.GetFromId(vehicleId);
+                return GetStyleForModel(busModel);
             }),
             //IsMapInfoLayer = true
         };
@@ -372,7 +410,7 @@ public partial class MainView : UserControl
     {
         if (StyleCache.TryGetValue(model, out var cachedStyle)) return cachedStyle;
      
-        string imageName = model switch
+        var imageName = model switch
         {
             BusModel.YutongZK6116HGSCityMaster => "tiny2dbus.png",
            // BusModel.MANA23LionsCityGCNG => "bendy_bus.png",
@@ -395,7 +433,7 @@ public partial class MainView : UserControl
             return s;
         }
 
-       var style = new ImageStyle()
+        var style = new ImageStyle()
         {
             Image = $"embedded://SMassTrans.Avalonia.{imageName}",
             SymbolScale = 1.0
@@ -447,12 +485,12 @@ public partial class MainView : UserControl
 
         var menu = new ContextMenu
         {
+            ItemsSource = new List<MenuItem> { fromItem, toItem }
         };
-        menu.ItemsSource =new List<MenuItem> { fromItem, toItem };
         menu.Open(mapControl);
     }
 
-    private string? SelectedBusFeatureID = null;
+    private string? SelectedBusFeatureID;
     private void OnMapInfo(object? sender, MapInfoEventArgs e)
     {
         var mapInfo = e.GetMapInfo([layer]);
@@ -553,8 +591,8 @@ public partial class MainView : UserControl
         MapEn = false;  
     }
 
-    private double? CenterX=null, CenterY=null,Resolution=null;
-    private bool MapEn = false;
+    private double? CenterX, CenterY,Resolution;
+    private bool MapEn;
 
 
 

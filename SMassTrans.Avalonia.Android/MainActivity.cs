@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Net.Http;
+using _Microsoft.Android.Resource.Designer;
 using Android.App;
-using Android.Content;
 using Android.Content.PM;
 using Android.OS;
 using AndroidX.Core.App;
@@ -12,7 +10,6 @@ using Avalonia.Maui;
 using Avalonia.ReactiveUI;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Devices.Sensors;
-using SMassTrans.Shared;
 using SystemDebug = System.Diagnostics.Debug;
 
 namespace SMassTrans.Avalonia.Android;
@@ -53,17 +50,18 @@ public class MainActivity : AvaloniaMainActivity<App>
             var channelId = "route_tracking";
             var channelName = "Route Tracking";
             var channelDescription = "Notifications for route tracking";
-
+            if (OperatingSystem.IsAndroidVersionAtLeast(26))
+            {
                 var channel = new NotificationChannel(channelId, channelName, NotificationImportance.High)
                 {
                     Description = channelDescription
                 };
                 notificationManager.CreateNotificationChannel(channel);
-
+            }
             var notification = new NotificationCompat.Builder(Platform.AppContext, channelId)
                 .SetContentTitle("SMassTrans Route Tracking")
                 .SetContentText(notificationT)
-                .SetSmallIcon(Resource.Drawable.ic_launcher_foreground)
+                .SetSmallIcon(ResourceConstant.Drawable.ic_launcher_foreground)
                 .SetAutoCancel(true)
                 .Build();
 

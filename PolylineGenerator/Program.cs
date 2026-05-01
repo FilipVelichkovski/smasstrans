@@ -12,7 +12,7 @@ await skopska.GetStops(true);
 // Key: Route Name/ID, Value: Full Encoded Polyline for the entire journey
 Dictionary<string, List<string>> routeGeometries = new();
 
-async Task<List<string>> GetFullRouteShape(List<string> stopIds)
+async Task<List<string>> GetFullRouteShape(List<string> stopIds, string Name)
 {
     // 1. Resolve all stops for this route
     var locations = new List<object>();
@@ -59,7 +59,7 @@ async Task<List<string>> GetFullRouteShape(List<string> stopIds)
         }
         if (!response.IsSuccessStatusCode) {
             var error = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"Valhalla failed for {error}");
+            Console.WriteLine($"Route {Name} Valhalla failed: {error}");
         }
     }
     catch (Exception ex)
@@ -70,7 +70,7 @@ async Task<List<string>> GetFullRouteShape(List<string> stopIds)
 }
 foreach (var route in routes)
 {
-    var fullShape = await GetFullRouteShape(route.StopIds);
+    var fullShape = await GetFullRouteShape(route.StopIds, route.Name);
     routeGeometries[route.LineRouteId.LineId+"_"+ route.LineRouteId.RouteId] = fullShape;
 }
 File.WriteAllText("fullRouteGeometries.json", JsonSerializer.Serialize(routeGeometries));

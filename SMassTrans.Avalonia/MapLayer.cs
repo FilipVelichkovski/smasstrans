@@ -9,7 +9,7 @@ namespace SMassTrans.Avalonia;
 
 public static class OpenStreetMap
 {
-    public static FileCache? cache = null;
+    private static FileCache? _cache;
 
     private static readonly Attribution OpenStreetMapAttribution = new("© OpenStreetMap contributors", "https://www.openstreetmap.org/copyright");
 
@@ -23,15 +23,15 @@ public static class OpenStreetMap
 
     private static HttpTileSource CreateTileSource(string userAgent)
     {
-        if (cache == null)
+        if (_cache == null)
         {  
             var loc=Path.Combine(Path.GetTempPath(),"smasstransmap");
             Directory.CreateDirectory(loc);
-            cache = new(loc, "png", TimeSpan.FromDays(31));
+            _cache = new(loc, "png", TimeSpan.FromDays(31));
         }
         GlobalSphericalMercator tileSchema = new();
         Attribution openStreetMapAttribution = OpenStreetMapAttribution;
-        return new HttpTileSource(tileSchema, "https://tile.openstreetmap.org/{z}/{x}/{y}.png", null, null, "OpenStreetMap", cache, openStreetMapAttribution,
+        return new HttpTileSource(tileSchema, App.Config.OSMTileServer, null, null, "OpenStreetMap", _cache, openStreetMapAttribution,
             x =>
             {
                 x.Headers.UserAgent.ParseAdd(userAgent);

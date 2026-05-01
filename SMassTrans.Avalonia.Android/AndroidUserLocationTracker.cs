@@ -12,7 +12,7 @@ namespace SMassTrans.Avalonia.Android;
 /// <summary>
 /// Native implementation of user location tracking using a foreground service
 /// </summary>
-public class AndroidUserLocationTracker : IUserLocationTracker, IDisposable
+public class AndroidUserLocationTracker : IUserLocationTracker
 {
     private UserLocation _currentLocation;
     private bool _isTracking;

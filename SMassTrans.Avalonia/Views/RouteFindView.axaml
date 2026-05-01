@@ -1,6 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:system="clr-namespace:System;assembly=System.Runtime"
              xmlns:local="clr-namespace:SMassTrans.Avalonia"
              xmlns:lang="clr-namespace:SMassTrans.Avalonia.Lang"
              x:Class="SMassTrans.Avalonia.Views.RouteFindView">

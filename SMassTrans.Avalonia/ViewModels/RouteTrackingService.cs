@@ -14,7 +14,7 @@ public class RouteTrackingService
 {
     private IRouteInfo _activeRoute;
     private List<SkopskaStop> _routeStops;
-    private IUserLocationTracker _locationTracker;
+    private IUserLocationTracker? _locationTracker;
     private int _currentStopIndex = -1;
     
     // Distance threshold for "approaching" a stop (meters)
@@ -262,7 +262,7 @@ public class UpcomingStopModel
     public StopProximityStatus Status { get; set; }
     public int StopIndex { get; set; }
 
-    public string DistanceDisplay => double.IsInfinity(Distance) || double.IsNaN(Distance) || Distance == double.MaxValue
+    public string DistanceDisplay => double.IsInfinity(Distance) || double.IsNaN(Distance)
         ? "?.?"
         : $"{Math.Round(Distance)}m";
     

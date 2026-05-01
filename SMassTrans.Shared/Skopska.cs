@@ -11,7 +11,10 @@ public class Skopska : IClient<SkopskaStop, LineInfo>
     public Skopska(HttpClient _client)
     {
         client = _client;
-        client.DefaultRequestHeaders.Add("User-Agent", "SMassTrans (+https://gitlab.com/silvercraft, silverdiamond@duck.com)");
+        if (!client.DefaultRequestHeaders.Contains("User-Agent"))
+        {
+            client.DefaultRequestHeaders.Add("User-Agent", "SMassTrans (+https://gitlab.com/silvercraft, silverdiamond@duck.com)");
+        }
     }
     const string baseUrl = "http://info.skopska.mk:8080";
     const string authUrl = baseUrl + "/rest-auth/guests?aid=3136";
@@ -54,6 +57,7 @@ public class Skopska : IClient<SkopskaStop, LineInfo>
         List<SkopskaStop> stops = [];
         await foreach (var s in enu)
         {
+            if (s == null) continue;
             stops.Add(new SkopskaStop(s.id.ToString(), s.number, s.name, s.lat, s.lon));
         }
         _stopsCache.Value = stops;
@@ -61,15 +65,14 @@ public class Skopska : IClient<SkopskaStop, LineInfo>
 
     }
 
-    public async Task<SkopskaStop> GetStop(string stopId)
+    public async Task<SkopskaStop?> GetStop(string stopId)
     {
         var a= int.Parse(stopId);
         if (!_stopsCache.IsValid)
         {
            await GetStops();
         }
-
-       return _stopsCache.Value.First(x => x.StopId == a);
+        return _stopsCache.Value.FirstOrDefault(x => x.StopId == a);
     }
     FileBackedCache<SerializableDictionary<LineRouteId, RouteInfo>>? RouteInfoCache=new(TimeSpan.FromHours(10),"routeInfo");
     public async Task<IEnumerable<RouteInfo>> GetAllRouteInfo()

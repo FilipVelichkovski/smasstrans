@@ -88,7 +88,7 @@ public class RouteTrackingSelectionViewModel : ViewModelBase
                     Stops = g.First().StopIds
                         .Where(sid => int.TryParse(sid, out var id) && allStops.Any(s => s.StopId == id))
                         .Select(sid => allStops.First(s => int.TryParse(sid, out var id) && s.StopId == id))
-                        .ToList() as List<SkopskaStop> ?? new()
+                        .ToList() ?? new()
                 })
                 .OrderBy(r => r.RouteInfo.LineRouteId.LineId)
                 .ToList();
@@ -113,12 +113,7 @@ public class RouteTrackingSelectionViewModel : ViewModelBase
     public void SelectRoute(RouteSelectionModel route)
     {
         RouteSelected?.Invoke(this, route);
-        
-        // If MainViewModel is available, handle navigation and start tracking directly
-        if (_mainViewModel != null)
-        {
-            HandleRouteSelectionWithNavigation(route);
-        }
+        HandleRouteSelectionWithNavigation(route);
     }
 
     /// <summary>
@@ -128,12 +123,6 @@ public class RouteTrackingSelectionViewModel : ViewModelBase
     {
         try
         {
-            if (_mainViewModel.RouteTrackingService == null)
-            {
-                Debug.WriteLine("HandleRouteSelectionWithNavigation: RouteTrackingService is null");
-                return;
-            }
-
             Debug.WriteLine($"HandleRouteSelectionWithNavigation: Selected route {route.RouteInfo.Name} {route.RouteInfo.Direction}");
             
             // Create the tracking view model

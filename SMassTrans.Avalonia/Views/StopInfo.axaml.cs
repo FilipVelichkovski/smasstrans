@@ -15,7 +15,6 @@ namespace SMassTrans.Avalonia.Views;
 public partial class StopInfo : UserControl
 {
     private IStop _stop;
-    private readonly EventHandler<LineRouteId> _gpsLine;
     private Tab bsource;
     private Skopska _client;
     private MainViewModel _mainViewModel;
@@ -145,7 +144,7 @@ public partial class StopInfo : UserControl
             DataContext = trackingViewModel
         };
 
-        _mainViewModel.GoForward(bsource == Tab.Stop ? Tab.RouteTracking : Tab.RouteTracking, trackingView);
+        _mainViewModel.GoForward(Tab.RouteTracking, trackingView);
         
         // Start tracking the route
         await trackingViewModel.StartTrackingAsync(routeInfo, routeStops);

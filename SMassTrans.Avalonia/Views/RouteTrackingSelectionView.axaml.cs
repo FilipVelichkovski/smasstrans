@@ -23,7 +23,6 @@ public partial class RouteTrackingSelectionView : UserControl
         {
             _viewModel = viewModel;
             _viewModel.RouteSelected += OnRouteSelected;
-            _viewModel.LoadRoutes();
         }
     }
 

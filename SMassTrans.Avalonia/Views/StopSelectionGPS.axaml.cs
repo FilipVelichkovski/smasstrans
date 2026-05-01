@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using Avalonia.Collections;
 using Avalonia.Controls;
@@ -14,7 +15,6 @@ public partial class StopSelectionGPS : UserControl
     public StopSelectionGPS()
     {
         InitializeComponent();
-    
     }
     private void StopTap(object? sender, TappedEventArgs e)
     {
@@ -41,8 +41,8 @@ public partial class StopSelectionGPS : UserControl
     private async void Button_OnClick(object? sender, RoutedEventArgs e)
     {
         var (l1, l2) = await LocationGatherer.GetLoc();
-        Lat.Text = l1.ToString();
-        Long.Text = l2.ToString();
+        Lat.Text = l1.ToString(CultureInfo.InvariantCulture);
+        Long.Text = l2.ToString(CultureInfo.InvariantCulture);
 
     }
 }

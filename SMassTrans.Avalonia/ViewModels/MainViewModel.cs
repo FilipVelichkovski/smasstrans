@@ -7,6 +7,7 @@ using SMassTrans.Avalonia.Views;
 using SMassTrans.Shared;
 
 namespace SMassTrans.Avalonia.ViewModels;
+
 public enum Tab
 {
     Stop,
@@ -19,32 +20,37 @@ public class MainViewModel : ViewModelBase
     public Skopska client;
     public static EventHandler<LineRouteId> SetGpsLine;
     private AvaloniaList<IStop> _stops = new();
-    public AvaloniaList<IStop> Stops{
-        get=>_stops;
+    public AvaloniaList<IStop> Stops
+    {
+        get => _stops;
         set => this.RaiseAndSetIfChanged(ref _stops, value);
     }
     private AvaloniaList<IRouteInfo> _lines = new();
-    public AvaloniaList<IRouteInfo> Lines{
-        get=>_lines;
+    public AvaloniaList<IRouteInfo> Lines
+    {
+        get => _lines;
         set => this.RaiseAndSetIfChanged(ref _lines, value);
     }
     private Control _stopContent = new StopSelection();
-    public Control StopContent{
-        get=>_stopContent;
+    public Control StopContent
+    {
+        get => _stopContent;
         set => this.RaiseAndSetIfChanged(ref _stopContent, value);
     }
-    public Stack<Control> PrevStopContent=new();
-    
+    public Stack<Control> PrevStopContent = new();
+
     private Control _stopGPSContent = new StopSelectionGPS();
-    public Control StopGPSContent{
-        get=>_stopGPSContent;
+    public Control StopGPSContent
+    {
+        get => _stopGPSContent;
         set => this.RaiseAndSetIfChanged(ref _stopGPSContent, value);
     }
-    public Stack<Control> PrevStopGPSContent=new();
+    public Stack<Control> PrevStopGPSContent = new();
 
     private Control? _linePage = new LineView();
-    public Control LinePage{
-        get=>_linePage;
+    public Control LinePage
+    {
+        get => _linePage;
         set => this.RaiseAndSetIfChanged(ref _linePage, value);
     }
 
@@ -55,7 +61,7 @@ public class MainViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref _routeTrackingService, value);
     }
 
-    private Control _routeTrackingPage =null;
+    private Control _routeTrackingPage;
     public Control RouteTrackingPage
     {
         get => _routeTrackingPage;
@@ -85,16 +91,16 @@ public class MainViewModel : ViewModelBase
         switch (tab)
         {
             case Tab.Stop:
-                PrevStopContent.Push( StopContent );
-                StopContent=next;
+                PrevStopContent.Push(StopContent);
+                StopContent = next;
                 break;
             case Tab.StopGPS:
-                PrevStopGPSContent.Push( StopGPSContent );
-                StopGPSContent=next;
+                PrevStopGPSContent.Push(StopGPSContent);
+                StopGPSContent = next;
                 break;
             case Tab.Line:
-                PrevLinePages.Push( LinePage);
-                LinePage=next;
+                PrevLinePages.Push(LinePage);
+                LinePage = next;
                 break;
             case Tab.RouteTracking:
                 PrevRouteTrackingPages.Push(RouteTrackingPage);
@@ -102,20 +108,21 @@ public class MainViewModel : ViewModelBase
                 break;
         }
     }
-    
-    public Stack<Control> PrevLinePages=new();
-    public Stack<Control> PrevRouteTrackingPages=new();
 
-    private Control? _routeFindPage = new SMassTrans.Avalonia.Views.RouteFindView();
+    public Stack<Control> PrevLinePages = new();
+    public Stack<Control> PrevRouteTrackingPages = new();
+
+    private Control? _routeFindPage = new RouteFindView();
     public Control? RouteFindPage
     {
         get => _routeFindPage;
         set => this.RaiseAndSetIfChanged(ref _routeFindPage, value);
     }
 
-      private string _mapName = "Map";
-    public string MapName{
-        get=>_mapName;
+    private string _mapName = "Map";
+    public string MapName
+    {
+        get => _mapName;
         set => this.RaiseAndSetIfChanged(ref _mapName, value);
     }
 
@@ -139,4 +146,3 @@ public class MainViewModel : ViewModelBase
         _routeTrackingService = null;
     }
 }
-
