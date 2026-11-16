@@ -1,25 +1,30 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.Json;
-using SMassTrans.Shared;
+using SMassTrans.Shared.ModeShift;
 
 var _httpClient = new HttpClient();
-Skopska skopska = new(_httpClient);
-await skopska.InitAsync();
+string valhallaUrl = args.FirstOrDefault()
+    ?? Environment.GetEnvironmentVariable("VALHALLA_URL")
+    ?? "http://localhost:8002/route";
 
-var routes = await skopska.GetAllRouteInfo();
-await skopska.GetStops(true);
+ModeShiftClient client = new(_httpClient);
+await client.InitAsync();
 
-// Key: Route Name/ID, Value: Full Encoded Polyline for the entire journey
+var stops = await client.GetStops(true);
+var stopById = stops.ToDictionary(s => s.StopId.ToString(), s => s);
+var routes = (await client.GetAllRouteInfo()).ToList();
+
+Console.WriteLine($"Loaded {stops.Count} stops and {routes.Count} routes from ModeShift. Using Valhalla at {valhallaUrl}");
+
+// Key: LineId_RouteId, Value: Full Encoded Polyline segments for the entire journey
 Dictionary<string, List<string>> routeGeometries = new();
 
-async Task<List<string>> GetFullRouteShape(List<string> stopIds, string Name)
+async Task<List<string>?> GetFullRouteShape(List<string> stopIds, string name)
 {
-    // 1. Resolve all stops for this route
     var locations = new List<object>();
     foreach (var id in stopIds)
     {
-        var stop = await skopska.GetStop(id);
-        if (stop != null)
+        if (stopById.TryGetValue(id, out var stop))
         {
             locations.Add(new { lat = stop.Lat, lon = stop.Lon });
         }
@@ -27,51 +32,76 @@ async Task<List<string>> GetFullRouteShape(List<string> stopIds, string Name)
 
     if (locations.Count < 2) return null;
 
-    // 2. Build the Valhalla multi-stop request
-    var requestBody = new
-    {
-        locations = locations,
-        costing = "bus",
-        units = "kilometers",
-        // 'osrm' or 'polyline6' are common. Valhalla default is polyline6 (6 decimal precision)
-    };
+    const int maxBatch = 45;
+    var allShapes = new List<string>();
 
-    try
+    for (int start = 0; start < locations.Count - 1; start += maxBatch - 1)
     {
-        var response = await _httpClient.PostAsync(
-            "http://localhost:8002/route", 
-            new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json")
-        );
+        int count = Math.Min(maxBatch, locations.Count - start);
+        var batch = locations.GetRange(start, count);
 
-        if (response.IsSuccessStatusCode)
+        var requestBody = new
         {
-            var content = await response.Content.ReadAsStringAsync();
-            using var doc = JsonDocument.Parse(content);
-            var trip = doc.RootElement.GetProperty("trip");
-            var legs = trip.GetProperty("legs");
-            List<string> allShapes = new List<string>();
+            locations = batch,
+            costing = "bus",
+            units = "kilometers",
+        };
 
-            foreach (var leg in legs.EnumerateArray())
+        try
+        {
+            var response = await _httpClient.PostAsync(
+                valhallaUrl,
+                new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json")
+            );
+
+            if (response.IsSuccessStatusCode)
             {
-                allShapes.Add(leg.GetProperty("shape").GetString());
+                var content = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(content);
+                var trip = doc.RootElement.GetProperty("trip");
+                var legs = trip.GetProperty("legs");
+
+                foreach (var leg in legs.EnumerateArray())
+                {
+                    var shape = leg.GetProperty("shape").GetString();
+                    if (!string.IsNullOrEmpty(shape))
+                    {
+                        allShapes.Add(shape);
+                    }
+                }
             }
-            return allShapes;
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Route {name} Valhalla failed ({response.StatusCode}): {error}");
+                return null;
+            }
         }
-        if (!response.IsSuccessStatusCode) {
-            var error = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"Route {Name} Valhalla failed: {error}");
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching full route {name}: {ex.Message}");
+            return null;
         }
     }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error fetching full route: {ex.Message}");
-    }
-    return null;
+
+    return allShapes;
 }
+
+int count = 0;
 foreach (var route in routes)
 {
-    var fullShape = await GetFullRouteShape(route.StopIds, route.Name);
-    routeGeometries[route.LineRouteId.LineId+"_"+ route.LineRouteId.RouteId] = fullShape;
+    var key = $"{route.LineRouteId.LineId}_{route.LineRouteId.RouteId}";
+    var fullShape = await GetFullRouteShape(route.StopIds, $"{key} ({route.Name})");
+    if (fullShape != null && fullShape.Count > 0)
+    {
+        routeGeometries[key] = fullShape;
+    }
+    count++;
+    if (count % 20 == 0 || count == routes.Count)
+    {
+        Console.WriteLine($"Processed {count}/{routes.Count} routes ({routeGeometries.Count} succeeded)");
+    }
 }
+
 File.WriteAllText("fullRouteGeometries.json", JsonSerializer.Serialize(routeGeometries));
 Console.WriteLine($"Finished! Saved {routeGeometries.Count} complete route shapes.");
