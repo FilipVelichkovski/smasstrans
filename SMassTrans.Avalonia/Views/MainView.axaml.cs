@@ -419,13 +419,13 @@ public partial class MainView : UserControl
         };
         mapControl.Map?.Layers.Add(layer);
 
-        mapControl.Initialized += (sender, args) =>
+        void CenterMap()
         {
             try
             {
                 if (CenterX is { } x && CenterY is { } y)
                 {
-                    mapControl.Map?.Navigator.CenterOnAndZoomTo(new MPoint(x, y), Resolution??18);
+                    mapControl.Map?.Navigator.CenterOnAndZoomTo(new MPoint(x, y), Resolution ?? mapControl.Map.Navigator.Resolutions[18]);
                 }
                 else
                 {
@@ -436,7 +436,10 @@ public partial class MainView : UserControl
             {
                 Debug.WriteLine(e.Message);
             }
-        };
+        }
+
+        mapControl.Initialized += (_, _) => CenterMap();
+        mapControl.Loaded += (_, _) => CenterMap();
 
         MapEn = true;  
     } private static readonly Dictionary<BusModel, BaseStyle> StyleCache = new();
