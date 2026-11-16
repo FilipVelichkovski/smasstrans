@@ -65,6 +65,18 @@ jobs:
             echo "key_pass=$GEN_PASS" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Cache Build and Native .so / AOT Artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.nuget/packages
+            SMassTrans.Avalonia.Android/obj
+            SMassTrans.Avalonia/obj
+            SMassTrans.Shared/obj
+          key: ${{ runner.os }}-android-arm64-obj-${{ hashFiles('**/*.csproj', '**/*.props') }}
+          restore-keys: |
+            ${{ runner.os }}-android-arm64-obj-
+
       - name: Restore Dependencies
         run: |
           dotnet restore SMassTrans.Avalonia.Android/SMassTrans.Avalonia.Android.csproj --warnaserror:false
