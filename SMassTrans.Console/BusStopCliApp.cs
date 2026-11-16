@@ -2,11 +2,11 @@ using SMassTrans.Shared;
 
 namespace SMassTrans.Console;
 
-public class BusStopCliApp
+public class BusStopCliApp<TStop> where TStop : IStop
 {
-    private readonly Skopska _client;
+    private readonly IClient<TStop, LineInfo> _client;
 
-    public BusStopCliApp(Skopska client)
+    public BusStopCliApp(IClient<TStop, LineInfo> client)
     {
         _client = client;
     }
@@ -23,7 +23,7 @@ public class BusStopCliApp
 
         foreach (var stop in matchingStops)
         {
-            var linesAndTimes = await _client.GetLiveStopLinesForStopAsync(stop.StopId.ToString("0000"));
+            var linesAndTimes = await _client.GetLiveStopLinesForStopAsync(stop.StopId.ToString());
             System.Console.WriteLine($"{stop.StopName}:");
 
             foreach (var (lineRouteId, times) in linesAndTimes)
@@ -43,7 +43,7 @@ public class BusStopCliApp
     {
         System.Console.WriteLine("name of the stop you're searching for: ");
         string input = string.Empty;
-        IEnumerable<string> suggestions =[];
+        IEnumerable<string> suggestions = [];
         while (true)
         {
             var keyInfo = System.Console.ReadKey(intercept: true);
@@ -62,7 +62,6 @@ public class BusStopCliApp
             {
                 input += keyInfo.KeyChar;
                 System.Console.CursorLeft = 0;
-                //Console.CursorTop--;
                 System.Console.WriteLine(input);
                 suggestions = await FetchSuggestionsAsync(input);
                 DisplaySuggestions(suggestions);
@@ -85,12 +84,15 @@ public class BusStopCliApp
         System.Console.CursorTop++;
         System.Console.CursorLeft = 0;
         System.Console.Write(new string(' ', System.Console.WindowWidth));
-        //Console.CursorTop--;
-
         System.Console.CursorLeft = 0;
         System.Console.WriteLine(string.Join(", ", suggestions));
-        System.Console.CursorTop =a;
-        // Console.CursorTop -= suggestions.Count() > 0 ? 1 : 0;
+        System.Console.CursorTop = a;
     }
+}
 
+public class BusStopCliApp : BusStopCliApp<SkopskaStop>
+{
+    public BusStopCliApp(Skopska client) : base(client)
+    {
+    }
 }

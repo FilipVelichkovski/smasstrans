@@ -1,6 +1,6 @@
 namespace SMassTrans.Shared.ModeShift;
 
-public class Stop
+public class Stop : IStop
 {
     public int id { get; set; }
     public string name { get; set; }
@@ -8,6 +8,11 @@ public class Stop
     public double latitude { get; set; }
     public double longitude { get; set; }
     public StopPatterns[] patterns { get; set; }
+    public int StopId => id;
+    public int StopNum => int.TryParse(code, out var n) ? n : id;
+    public string StopName => name;
+    public double Lat => latitude;
+    public double Lon => longitude;
 }
 
 public class StopPatterns
@@ -19,3 +24,4 @@ public class StopPatterns
     public int fromStopId { get; set; }
     public int viaStopId { get; set; }
 }
+

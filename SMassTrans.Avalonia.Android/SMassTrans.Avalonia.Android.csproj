@@ -15,8 +15,8 @@
         <AndroidCreatePackagePerAbi>true</AndroidCreatePackagePerAbi>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(OS)' != 'Windows_NT' ">
-        <JavaSdkDirectory>/usr/lib/jvm/java-17-openjdk/</JavaSdkDirectory>
-        <AndroidSdkDirectory>/opt/android-sdk</AndroidSdkDirectory>
+        <JavaSdkDirectory Condition=" '$(JavaSdkDirectory)' == '' and exists('/usr/lib/jvm/java-17-openjdk/') ">/usr/lib/jvm/java-17-openjdk/</JavaSdkDirectory>
+        <AndroidSdkDirectory Condition=" '$(AndroidSdkDirectory)' == '' and exists('/opt/android-sdk') ">/opt/android-sdk</AndroidSdkDirectory>
     </PropertyGroup>
     <ItemGroup>
         <AndroidResource Include="Icon.png">

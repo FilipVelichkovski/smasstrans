@@ -1,89 +1,40 @@
 using System.Diagnostics;
 using System.Text.Json.Serialization;
-using System.Net.WebSockets;
-using System.Text;
-using System.Text.Json;
+using SMassTrans.Shared.ModeShift;
+
 namespace SMassTrans.Shared;
 
 public class Stormwin : IGps
 {
-    public event EventHandler<GpsData> DataRecieved;
-    CancellationTokenSource s = new();
-    Task com;
-    ClientWebSocket ws = new();
+    private readonly ModeShiftGps _modeShiftGps;
 
-    async Task Com(CancellationToken cancellationToken)
-    {
-        Uri uri = new("wss://jspotg.stormwin.mk");
-         ws.Options.RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => 
-    {
-        return true; 
-    };
-        await ws.ConnectAsync(uri, cancellationToken);
-        while (!cancellationToken.IsCancellationRequested)
-        {
-            var bytes = new byte[1024 * 256];
-            var result = await ws.ReceiveAsync(bytes, default);
-            string res = Encoding.UTF8.GetString(bytes, 0, result.Count);
-            Debug.WriteLine(res);
-            if (res == "ping")
-            {
-                await ws.SendAsync("pong"u8.ToArray(), WebSocketMessageType.Text, true, cancellationToken);
-                continue;
-            }
-            try
-            {
-                var gps = JsonSerializer.Deserialize<GPSRoot>(res);
-                var igps = new GpsData
-                {
-                    Id = gps.RouteId,
-                    Infos = []
-                };
-                igps.Infos.AddRange(gps.Positions);
-                DataRecieved?.Invoke(this, igps);
-            }
-            catch (Exception e)
-            {
-                Debug.WriteLine(e);
-                throw;
-            }
-        }
-        Debug.WriteLine("normal cancellation");
-        await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, null, default);
-    }
-    public async Task SubscribeToLine(string Line)
-    {
-        async Task sub()
-        {
-            var payload = new Dictionary<string, string>
-                    {
-                        { "action", "subscribe" },
-                        { "routeId", Line }
-                    };
-            await ws.SendAsync(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(payload)), WebSocketMessageType.Text, true, s.Token);
-        }
-        if (ws.State is not (WebSocketState.Connecting or WebSocketState.Open))
-        {
-            com = Task.Run(async () => { s = new(); await Com(s.Token); });
-            while (ws.State != WebSocketState.Open)
-            {
-                await Task.Delay(50);
-            }
-        }
+    public event EventHandler<GpsData>? DataRecieved;
 
-        await sub();
+    public Stormwin(HttpClient? client = null)
+    {
+        _modeShiftGps = new ModeShiftGps(client);
+        _modeShiftGps.DataRecieved += (sender, data) =>
+        {
+            DataRecieved?.Invoke(this, data);
+        };
     }
 
-    public Task UnSubscribeToLine(string Line)
+    public async Task SubscribeToLine(string line)
     {
-        throw new NotImplementedException();
+        await _modeShiftGps.SubscribeToLine(line);
+    }
+
+    public async Task UnSubscribeToLine(string line)
+    {
+        await _modeShiftGps.UnSubscribeToLine(line);
     }
 
     public void Dispose()
     {
-        ws.Dispose();
+        _modeShiftGps.Dispose();
     }
 }
+
 
 public class Position : IGpsInfo
 {
