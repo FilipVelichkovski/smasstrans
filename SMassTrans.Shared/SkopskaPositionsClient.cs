@@ -16,7 +16,8 @@ public class SkopskaPositionsClient
     private const string CoursesUrl = BaseUrl + "/rest-its/scheme/courses";
 
     private string? _sessionId;
-    private readonly FileBackedCache<Dictionary<int, int>> _courseToRouteCache = new(TimeSpan.FromHours(24), "skopska_course_routes");
+    private readonly FileBackedCache<List<SkopskaRawCourse>> _coursesCache = new(TimeSpan.FromHours(24), "skopska_courses");
+    private Dictionary<int, int>? _courseRouteDict;
 
     public SkopskaPositionsClient(HttpClient? client = null)
     {
@@ -123,9 +124,15 @@ public class SkopskaPositionsClient
 
     public async Task<Dictionary<int, int>> GetCourseRoutesAsync(CancellationToken ct = default)
     {
-        if (_courseToRouteCache.IsValid && _courseToRouteCache.Value != null && _courseToRouteCache.Value.Count > 0)
+        if (_courseRouteDict != null)
         {
-            return _courseToRouteCache.Value;
+            return _courseRouteDict;
+        }
+
+        if (_coursesCache.IsValid && _coursesCache.Value != null && _coursesCache.Value.Count > 0)
+        {
+            _courseRouteDict = _coursesCache.Value.GroupBy(c => c.Id).ToDictionary(g => g.Key, g => g.First().RouteId);
+            return _courseRouteDict;
         }
 
         if (string.IsNullOrEmpty(_sessionId))
@@ -145,13 +152,9 @@ public class SkopskaPositionsClient
             if (resp.IsSuccessStatusCode)
             {
                 var courses = await resp.Content.ReadFromJsonAsync<List<SkopskaRawCourse>>(cancellationToken: ct).ConfigureAwait(false) ?? [];
-                var dict = new Dictionary<int, int>();
-                foreach (var c in courses)
-                {
-                    dict[c.Id] = c.RouteId;
-                }
-                _courseToRouteCache.Value = dict;
-                return dict;
+                _coursesCache.Value = courses;
+                _courseRouteDict = courses.GroupBy(c => c.Id).ToDictionary(g => g.Key, g => g.First().RouteId);
+                return _courseRouteDict;
             }
         }
         catch (Exception ex)
@@ -159,7 +162,13 @@ public class SkopskaPositionsClient
             Debug.WriteLine($"Failed to get Skopska courses: {ex.Message}");
         }
 
-        return _courseToRouteCache.Value ?? [];
+        if (_coursesCache.Value != null)
+        {
+            _courseRouteDict = _coursesCache.Value.GroupBy(c => c.Id).ToDictionary(g => g.Key, g => g.First().RouteId);
+            return _courseRouteDict;
+        }
+
+        return [];
     }
 
     public async Task<List<Position>> GetCombinedPositionsAsync(string? filterLine = null, CancellationToken ct = default)
