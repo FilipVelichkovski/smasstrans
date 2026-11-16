@@ -76,6 +76,7 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
         return p;
     }
     private List<IGpsInfo> infos = new();
+    public int BusCount => infos?.Count ?? 0;
 
    
     public override Task<IEnumerable<IFeature>> GetFeaturesAsync(FetchInfo fetchInfo)

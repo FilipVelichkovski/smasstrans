@@ -395,28 +395,11 @@ public partial class MainView : UserControl
         if (MapEn) return;
 
         mapControl = new();
-        mapControl.Initialized += (sender, args) =>
-        {
-            mapControl.Map?.Layers.Add(OpenStreetMap.CreateTileLayer());
-            _routeLayer = new Mapsui.Layers.WritableLayer { Name = "Bus Route Shape", Style = null  };
-            mapControl.Map?.Layers.Add(_routeLayer);
-            LoadRouteGeometry();
-            try
-            {
-                if (CenterX is { } x && CenterY is { } y)
-                {
-                    mapControl.Map?.Navigator.CenterOnAndZoomTo(new MPoint(x, y), Resolution??18);
-                }
-                else
-                {
-                    mapControl.Map?.Navigator.CenterOnAndZoomTo(Bitpazar, mapControl.Map.Navigator.Resolutions[18]);
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.WriteLine(e.Message);
-            }
-        };
+        mapControl.Map?.Layers.Add(OpenStreetMap.CreateTileLayer());
+        _routeLayer = new Mapsui.Layers.WritableLayer { Name = "Bus Route Shape", Style = null  };
+        mapControl.Map?.Layers.Add(_routeLayer);
+        LoadRouteGeometry();
+
         mapTabGrid.Children.Add(mapControl);
         mapControl.PointerReleased+= MapControl_PointerReleased;
         mapControl.Map.Info += OnMapInfo;
@@ -434,7 +417,27 @@ public partial class MainView : UserControl
             }),
             //IsMapInfoLayer = true
         };
-        mapControl.Map?.Layers.Add(layer); 
+        mapControl.Map?.Layers.Add(layer);
+
+        mapControl.Initialized += (sender, args) =>
+        {
+            try
+            {
+                if (CenterX is { } x && CenterY is { } y)
+                {
+                    mapControl.Map?.Navigator.CenterOnAndZoomTo(new MPoint(x, y), Resolution??18);
+                }
+                else
+                {
+                    mapControl.Map?.Navigator.CenterOnAndZoomTo(Bitpazar, mapControl.Map.Navigator.Resolutions[18]);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e.Message);
+            }
+        };
+
         MapEn = true;  
     } private static readonly Dictionary<BusModel, BaseStyle> StyleCache = new();
 
@@ -454,11 +457,12 @@ public partial class MainView : UserControl
         };
         if (imageName == "no-pic" )
         {
-            var s = new LabelStyle
+            var s = new SymbolStyle
             {
-                BackColor = new Brush(Color.Black),
-                ForeColor = Color.White,
-                Text = "Bus",
+                SymbolType = SymbolType.Ellipse,
+                Fill = new Brush(Color.OrangeRed),
+                Outline = new Pen(Color.White, 2),
+                SymbolScale = 0.8
             };
       
             StyleCache[model] = s;
@@ -541,6 +545,12 @@ public partial class MainView : UserControl
     }
     private void UpdateFeatureText(object? sender, EventArgs e)
     {
+        Dispatcher.UIThread.Post(() =>
+        {
+            layer?.DataHasChanged();
+            mapControl?.RefreshGraphics();
+        });
+
         if (SelectedBusFeatureID != null)
         {
             var x = BusPointProvider?.GetInfo(SelectedBusFeatureID);
@@ -568,9 +578,25 @@ public partial class MainView : UserControl
                 }
             }
             var resultx = result.ToString();
-            Dispatcher.UIThread.Invoke(() =>
+            Dispatcher.UIThread.Post(() =>
             {
                 mapdata.Text = resultx;
+            });
+        }
+        else if (BusPointProvider != null)
+        {
+            int count = BusPointProvider.BusCount;
+            string status = count > 0
+                ? $"Active buses: {count}"
+                : (string.IsNullOrEmpty(GpsLine)
+                    ? "No active buses currently reporting"
+                    : $"No active buses currently reporting for route {GpsLine}");
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (string.IsNullOrEmpty(SelectedBusFeatureID))
+                {
+                    mapdata.Text = status;
+                }
             });
         }
     }
