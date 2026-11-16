@@ -7,6 +7,7 @@ using Avalonia.Controls;
 using ReactiveUI;
 using SMassTrans.Avalonia.Views;
 using SMassTrans.Shared;
+using SMassTrans.Shared.ModeShift;
 
 namespace SMassTrans.Avalonia.ViewModels;
 
@@ -15,7 +16,7 @@ namespace SMassTrans.Avalonia.ViewModels;
 /// </summary>
 public class RouteTrackingSelectionViewModel : ViewModelBase
 {
-    private readonly Skopska _client;
+    private readonly ModeShiftClient _client;
     private readonly RouteTrackingService _trackingService;
     private readonly MainViewModel _mainViewModel;
     
@@ -42,7 +43,7 @@ public class RouteTrackingSelectionViewModel : ViewModelBase
 
     public event EventHandler<RouteSelectionModel> RouteSelected;
 
-    public RouteTrackingSelectionViewModel(Skopska client, RouteTrackingService trackingService, MainViewModel mainViewModel = null)
+    public RouteTrackingSelectionViewModel(ModeShiftClient client, RouteTrackingService trackingService, MainViewModel mainViewModel = null)
     {
         _client = client;
         _trackingService = trackingService;
@@ -86,9 +87,10 @@ public class RouteTrackingSelectionViewModel : ViewModelBase
                     StopsCount = g.First().StopIds.Count,
                     Direction = g.First().Direction,
                     Stops = g.First().StopIds
-                        .Where(sid => int.TryParse(sid, out var id) && allStops.Any(s => s.StopId == id))
-                        .Select(sid => allStops.First(s => int.TryParse(sid, out var id) && s.StopId == id))
-                        .ToList() ?? new()
+                        .Select(sid => int.TryParse(sid, out var id) ? allStops.FirstOrDefault(s => s.StopId == id) : null)
+                        .Where(s => s != null)
+                        .Cast<IStop>()
+                        .ToList()
                 })
                 .OrderBy(r => r.RouteInfo.LineRouteId.LineId)
                 .ToList();
@@ -154,7 +156,7 @@ public class RouteSelectionModel
     public IRouteInfo RouteInfo { get; set; }
     public int StopsCount { get; set; }
     public string Direction { get; set; }
-    public List<SkopskaStop> Stops { get; set; }
+    public List<IStop> Stops { get; set; }
 
     public string DisplayName => $"{RouteInfo.Name} - {Direction}";
     public string StopsInfo => $"{StopsCount} stops";

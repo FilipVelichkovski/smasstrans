@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Avalonia.Collections;
 using Avalonia.Controls;
 using ReactiveUI;
 using SMassTrans.Avalonia.Views;
 using SMassTrans.Shared;
+using SMassTrans.Shared.ModeShift;
 
 namespace SMassTrans.Avalonia.ViewModels;
 
@@ -17,7 +18,7 @@ public enum Tab
 }
 public class MainViewModel : ViewModelBase
 {
-    public Skopska client;
+    public ModeShiftClient client;
     public static EventHandler<LineRouteId> SetGpsLine;
     private AvaloniaList<IStop> _stops = new();
     public AvaloniaList<IStop> Stops

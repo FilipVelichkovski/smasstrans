@@ -13,7 +13,7 @@ namespace SMassTrans.Avalonia.ViewModels;
 public class RouteTrackingService
 {
     private IRouteInfo _activeRoute;
-    private List<SkopskaStop> _routeStops;
+    private List<IStop> _routeStops;
     private IUserLocationTracker? _locationTracker;
     private int _currentStopIndex = -1;
     
@@ -38,7 +38,7 @@ public class RouteTrackingService
     /// <summary>
     /// Start tracking user on a specific route
     /// </summary>
-    public async Task StartTrackingRouteAsync(IRouteInfo routeInfo, List<SkopskaStop> routeStops)
+    public async Task StartTrackingRouteAsync(IRouteInfo routeInfo, List<IStop> routeStops)
     {
         if (IsTracking)
             await StopTrackingAsync();
@@ -256,7 +256,7 @@ public enum StopProximityStatus
 /// </summary>
 public class UpcomingStopModel
 {
-    public SkopskaStop Stop { get; set; }
+    public IStop Stop { get; set; }
     public double Distance { get; set; }
     public bool IsNextStop { get; set; }
     public StopProximityStatus Status { get; set; }

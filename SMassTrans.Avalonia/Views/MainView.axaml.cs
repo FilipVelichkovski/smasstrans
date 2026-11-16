@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -32,6 +33,7 @@ using ReactiveUI;
 using SMassTrans.Avalonia.ViewModels;
 using SMassTrans.Avalonia.Views;
 using SMassTrans.Shared;
+using SMassTrans.Shared.ModeShift;
 using Brush = Mapsui.Styles.Brush;
 using Color = Mapsui.Styles.Color;
 using Pen = Mapsui.Styles.Pen;
@@ -41,7 +43,8 @@ namespace SMassTrans.Avalonia.Views;
 public partial class MainView : UserControl
 {
     private MainViewModel model = new();
-    public static Skopska client;
+    public static ModeShiftClient client;
+    public static readonly ConcurrentDictionary<string, string> StopNameCache = new();
     bool Inited;
     Mapsui.UI.Avalonia.MapControl mapControl;
     private BusPointProvider BusPointProvider;
@@ -67,7 +70,7 @@ public partial class MainView : UserControl
         InitializeComponent();
         TabCtl = this.FindControl<TabControl>("TabCtl");
         mapTabGrid = this.FindControl<Grid>("mapTabGrid");
-        client = new Skopska(App.HttpClient);
+        client = new ModeShiftClient(App.HttpClient);
         model.client = client;
         mapdata = this.FindControl<TextBlock>("mapdata");
         MainViewModel.SetGpsLine += SetGpsLine;
@@ -155,6 +158,28 @@ public partial class MainView : UserControl
  
  
 
+    public static string GetCachedStopName(int stopId)
+    {
+        var key = stopId.ToString();
+        if (StopNameCache.TryGetValue(key, out var name))
+        {
+            return name;
+        }
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var stop = await client.GetStop(key);
+                if (stop != null && !string.IsNullOrWhiteSpace(stop.StopName))
+                {
+                    StopNameCache[key] = stop.StopName;
+                }
+            }
+            catch {}
+        });
+        return $"Stop {stopId}";
+    }
+
     private async void SetGpsLine(object? sender, LineRouteId e)
     {
         var info = await client.GetRouteInfo(e);
@@ -164,8 +189,10 @@ public partial class MainView : UserControl
 
     private void SetGpsLine(IRouteInfo info)
     {
-        GpsLine = info.LineRouteId.RouteId;
-        model.MapName=$"Map ({info.Name.Trim()})";
+        // LineId in LineRouteId is the ModeShift Route ID (e.g. "121", "221")
+        GpsLine = info.LineRouteId.LineId;
+        model.MapName = $"Map ({info.Name.Trim()})";
+        _ = BusPointProvider?.Subscribe(GpsLine);
     }
  
     private void MapControl_Navigator_ViewportChanged(object? sender, PropertyChangedEventArgs e)
@@ -188,6 +215,11 @@ public partial class MainView : UserControl
                 }
                 var stops = await client.GetStops();
                 var lines = await client.GetAllRouteInfo();
+                foreach (var s in stops)
+                {
+                    StopNameCache[s.StopId.ToString()] = s.StopName;
+                    StopNameCache[s.StopNum.ToString()] = s.StopName;
+                }
                
                 await Dispatcher.UIThread.InvokeAsync(() =>
                 {
@@ -203,7 +235,7 @@ public partial class MainView : UserControl
     }
     private Mapsui.Layers.WritableLayer _routeLayer;
     private AnimatedPointLayer layer;
-    public static string GpsLine = "1126";
+    public static string GpsLine = "";
     private void SelectingItemsControl_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (e.Source is not TabControl) return;
@@ -511,7 +543,7 @@ public partial class MainView : UserControl
     {
         if (SelectedBusFeatureID != null)
         {
-            var x = BusPointProvider.GetInfo(SelectedBusFeatureID);
+            var x = BusPointProvider?.GetInfo(SelectedBusFeatureID);
             var result = new StringBuilder();
             if (x != null)
             {
@@ -521,16 +553,19 @@ public partial class MainView : UserControl
                     result.Append(':');
                     result.Append(' ');
 
-                    if (field == "StopId" &&  data is int xy)
+                    if (field == "StopId" && data is int xy)
                     {
-                        result.Append($" {xy}.{client.GetStop(xy.ToString("0000")).GetAwaiter().GetResult().StopName} - ");
+                        result.Append($" {xy}.{GetCachedStopName(xy)} - ");
                     }
                     else
                     {
                         result.Append($" {data} - ");
                     }
                 }
-                result.Remove(result.Length - 2, 2);  
+                if (result.Length >= 2)
+                {
+                    result.Remove(result.Length - 2, 2);  
+                }
             }
             var resultx = result.ToString();
             Dispatcher.UIThread.Invoke(() =>
@@ -551,14 +586,17 @@ public partial class MainView : UserControl
 
             if (field == "StopId" && f[field] is int x)
             {
-                result.Append($" {x}.{client.GetStop(x.ToString("0000")).GetAwaiter().GetResult().StopName} - ");
+                result.Append($" {x}.{GetCachedStopName(x)} - ");
             }
             else
             {
                 result.Append($" {f[field]} - ");
             }
         }
-        result.Remove(result.Length - 2, 2);
+        if (result.Length >= 2)
+        {
+            result.Remove(result.Length - 2, 2);
+        }
         return result.ToString();
     };
     

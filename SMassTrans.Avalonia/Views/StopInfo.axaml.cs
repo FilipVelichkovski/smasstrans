@@ -8,6 +8,7 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using SMassTrans.Avalonia.ViewModels;
 using SMassTrans.Shared;
+using SMassTrans.Shared.ModeShift;
 
 namespace SMassTrans.Avalonia.Views;
 
@@ -16,7 +17,7 @@ public partial class StopInfo : UserControl
 {
     private IStop _stop;
     private Tab bsource;
-    private Skopska _client;
+    private ModeShiftClient _client;
     private MainViewModel _mainViewModel;
     /// <summary>
     /// DO NOT USE THIS METHOD
@@ -48,7 +49,7 @@ public partial class StopInfo : UserControl
     {
         Task.Run(async () =>
         {
-            var linesAndTimes = await _client.GetLiveStopLinesForStopAsync(_stop.StopId.ToString("0000"));
+            var linesAndTimes = await _client.GetLiveStopLinesForStopAsync(_stop.StopId.ToString());
             var upcomingBuses = linesAndTimes.SelectMany(x => x.Value.Select(y => new UpcomingBusOnStop(x.Key, y))).ToList();
             upcomingBuses.Sort((x,y)=>DateTime.Compare( x.Time, y.Time));
             Dispatcher.UIThread.Invoke(() =>
@@ -110,8 +111,11 @@ public partial class StopInfo : UserControl
         if (sender is Control { DataContext: UpcomingBusOnStop bus } a)
         {
            
-            var stops =  _mainViewModel.client.GetRouteInfo(bus.LineAndRoute).GetAwaiter().GetResult().StopIds
-                .Select(x => _mainViewModel.client.GetStop(x).GetAwaiter().GetResult()).ToList();
+            var stops = _mainViewModel.client.GetRouteInfo(bus.LineAndRoute).GetAwaiter().GetResult().StopIds
+                .Select(x => _mainViewModel.client.GetStop(x).GetAwaiter().GetResult())
+                .Where(x => x != null)
+                .Cast<IStop>()
+                .ToList();
             var newpage=new StopSelectionLine(_mainViewModel, bsource)
             {
                 DataContext = new StopSelectionLineModel()
@@ -135,7 +139,8 @@ public partial class StopInfo : UserControl
         var routeInfo = _mainViewModel.client.GetRouteInfo(bus.LineAndRoute).GetAwaiter().GetResult();
         var routeStops = routeInfo.StopIds
             .Select(x => _mainViewModel.client.GetStop(x).GetAwaiter().GetResult())
-            .OfType<SkopskaStop>()
+            .Where(x => x != null)
+            .Cast<IStop>()
             .ToList();
 
         var trackingViewModel = new UserRouteTrackingViewModel(_mainViewModel.RouteTrackingService);

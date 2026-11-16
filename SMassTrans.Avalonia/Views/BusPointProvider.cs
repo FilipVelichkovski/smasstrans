@@ -18,9 +18,9 @@ public class BusPointProvider : MemoryProvider, IDynamic, IDisposable
 {
     //https://mapsui.com/v5/codesamples/SingleCalloutSample.html
     private Stormwin s;
-    public BusPointProvider(string line = "1126")
+    public BusPointProvider(string line = "")
     {
-        s = new();
+        s = new(App.HttpClient);
 
         s.DataRecieved += (x, y) =>
         {

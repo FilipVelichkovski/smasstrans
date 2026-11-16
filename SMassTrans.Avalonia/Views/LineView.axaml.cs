@@ -37,13 +37,15 @@ public partial class LineView : UserControl
         var topLevel = TopLevel.GetTopLevel(this);
         StringBuilder s = new();
         s.AppendLine($"{context.Name}: ");
-        if (context is RouteInfo routeInfo)
+        if (context is RouteInfo routeInfo && DataContext is MainViewModel mw)
         {
             var stops = routeInfo.StopIds
-                .Select(x => ((MainViewModel)DataContext).client.GetStop(x).GetAwaiter().GetResult()).ToList();
+                .Select(x => mw.client.GetStop(x).GetAwaiter().GetResult())
+                .Where(x => x != null)
+                .ToList();
             foreach (var stop in stops)
             {
-                s.AppendLine($"{stop.StopName}");
+                s.AppendLine($"{stop!.StopName}");
             }
         }
         topLevel.Clipboard.SetTextAsync(s.ToString());
@@ -53,7 +55,10 @@ public partial class LineView : UserControl
         if (sender is not Control { DataContext: IRouteInfo context }) return;
         if (context is not RouteInfo routeInfo || DataContext is not MainViewModel mainViewModel) return;
         var stops = routeInfo.StopIds
-            .Select(x => mainViewModel.client.GetStop(x).GetAwaiter().GetResult()).ToList();
+            .Select(x => mainViewModel.client.GetStop(x).GetAwaiter().GetResult())
+            .Where(x => x != null)
+            .Cast<IStop>()
+            .ToList();
         mainViewModel.GoForward(Tab.Line,new StopSelectionLine(mainViewModel, Tab.Line)
         {
             DataContext = new StopSelectionLineModel()
@@ -75,7 +80,8 @@ public partial class LineView : UserControl
 
         var stops = routeInfo.StopIds
             .Select(x => mainViewModel.client.GetStop(x).GetAwaiter().GetResult())
-            .OfType<SkopskaStop>()
+            .Where(x => x != null)
+            .Cast<IStop>()
             .ToList();
 
         var trackingViewModel = new UserRouteTrackingViewModel(mainViewModel.RouteTrackingService);

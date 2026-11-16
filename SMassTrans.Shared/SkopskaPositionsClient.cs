@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json.Serialization;
+using SilverConfig;
 
 namespace SMassTrans.Shared;
 
@@ -12,10 +13,10 @@ public class SkopskaPositionsClient
     private const string AuthUrl = BaseUrl + "/rest-auth/guests?aid=3136";
     private const string PositionsUrl = BaseUrl + "/rest-avl/rtpi/positions";
     private const string StatusesUrl = BaseUrl + "/rest-its/rtpi/vehicle-statuses";
-    private const string DutiesUrl = BaseUrl + "/rest-its/scheme/duties";
     private const string CoursesUrl = BaseUrl + "/rest-its/scheme/courses";
 
     private string? _sessionId;
+    private readonly FileBackedCache<Dictionary<int, int>> _courseToRouteCache = new(TimeSpan.FromHours(24), "skopska_course_routes");
 
     public SkopskaPositionsClient(HttpClient? client = null)
     {
@@ -31,10 +32,10 @@ public class SkopskaPositionsClient
         try
         {
             var content = new StringContent("{}", Encoding.UTF8, "application/json");
-            var resp = await _client.PostAsync(AuthUrl, content, ct);
+            var resp = await _client.PostAsync(AuthUrl, content, ct).ConfigureAwait(false);
             if (resp.IsSuccessStatusCode)
             {
-                var body = await resp.Content.ReadAsStringAsync(ct);
+                var body = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
                 _sessionId = body.Trim('"', ' ', '\r', '\n');
                 return _sessionId;
             }
@@ -50,7 +51,7 @@ public class SkopskaPositionsClient
     {
         if (string.IsNullOrEmpty(_sessionId))
         {
-            await AuthenticateAsync(ct);
+            await AuthenticateAsync(ct).ConfigureAwait(false);
         }
 
         try
@@ -61,21 +62,20 @@ public class SkopskaPositionsClient
                 request.Headers.Add("eurogps.eu.sid", _sessionId);
             }
 
-            var resp = await _client.SendAsync(request, ct);
+            var resp = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
             if (resp.StatusCode is System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden)
             {
-                // Re-authenticate and retry once
-                await AuthenticateAsync(ct);
+                await AuthenticateAsync(ct).ConfigureAwait(false);
                 using var retryReq = new HttpRequestMessage(HttpMethod.Get, PositionsUrl);
                 if (!string.IsNullOrEmpty(_sessionId))
                 {
                     retryReq.Headers.Add("eurogps.eu.sid", _sessionId);
                 }
-                resp = await _client.SendAsync(retryReq, ct);
+                resp = await _client.SendAsync(retryReq, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
             }
 
             resp.EnsureSuccessStatusCode();
-            return await resp.Content.ReadFromJsonAsync<List<SkopskaRawPosition>>(cancellationToken: ct) ?? [];
+            return await resp.Content.ReadFromJsonAsync<List<SkopskaRawPosition>>(cancellationToken: ct).ConfigureAwait(false) ?? [];
         }
         catch (Exception ex)
         {
@@ -88,7 +88,7 @@ public class SkopskaPositionsClient
     {
         if (string.IsNullOrEmpty(_sessionId))
         {
-            await AuthenticateAsync(ct);
+            await AuthenticateAsync(ct).ConfigureAwait(false);
         }
 
         try
@@ -99,20 +99,20 @@ public class SkopskaPositionsClient
                 request.Headers.Add("eurogps.eu.sid", _sessionId);
             }
 
-            var resp = await _client.SendAsync(request, ct);
+            var resp = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
             if (resp.StatusCode is System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden)
             {
-                await AuthenticateAsync(ct);
+                await AuthenticateAsync(ct).ConfigureAwait(false);
                 using var retryReq = new HttpRequestMessage(HttpMethod.Get, StatusesUrl);
                 if (!string.IsNullOrEmpty(_sessionId))
                 {
                     retryReq.Headers.Add("eurogps.eu.sid", _sessionId);
                 }
-                resp = await _client.SendAsync(retryReq, ct);
+                resp = await _client.SendAsync(retryReq, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
             }
 
             resp.EnsureSuccessStatusCode();
-            return await resp.Content.ReadFromJsonAsync<List<SkopskaRawStatus>>(cancellationToken: ct) ?? [];
+            return await resp.Content.ReadFromJsonAsync<List<SkopskaRawStatus>>(cancellationToken: ct).ConfigureAwait(false) ?? [];
         }
         catch (Exception ex)
         {
@@ -121,48 +121,115 @@ public class SkopskaPositionsClient
         }
     }
 
-    public async Task<List<Position>> GetCombinedPositionsAsync(string? filterLine = null, CancellationToken ct = default)
+    public async Task<Dictionary<int, int>> GetCourseRoutesAsync(CancellationToken ct = default)
     {
-        var positions = await GetPositionsAsync(ct);
-        if (positions.Count == 0) return [];
-
-        var statuses = await GetStatusesAsync(ct);
-        var statusDict = statuses.ToDictionary(s => s.VehicleId);
-
-        var result = new List<Position>();
-        foreach (var pos in positions)
+        if (_courseToRouteCache.IsValid && _courseToRouteCache.Value != null && _courseToRouteCache.Value.Count > 0)
         {
-            statusDict.TryGetValue(pos.VehicleId, out var st);
-
-            int routeId = 0;
-            if (int.TryParse(filterLine, out var fl))
-            {
-                routeId = fl;
-            }
-
-            var p = new Position
-            {
-                VehicleId = pos.VehicleId,
-                Lat = pos.Lat,
-                Lon = pos.Lon,
-                Time = pos.Time,
-                Speed = st?.Speed ?? 0,
-                Delay = st?.Delay ?? 0,
-                CourseId = st?.CourseId ?? 0,
-                Ignition = st?.Ignition ?? true,
-                Status = st?.Status ?? "COURSE_EXECUTE",
-                RouteId = routeId,
-                Vehicle = new Vehicle
-                {
-                    Name = pos.VehicleId.ToString(),
-                    Plate = pos.VehicleId.ToString()
-                }
-            };
-
-            result.Add(p);
+            return _courseToRouteCache.Value;
         }
 
-        return result;
+        if (string.IsNullOrEmpty(_sessionId))
+        {
+            await AuthenticateAsync(ct).ConfigureAwait(false);
+        }
+
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, CoursesUrl);
+            if (!string.IsNullOrEmpty(_sessionId))
+            {
+                request.Headers.Add("eurogps.eu.sid", _sessionId);
+            }
+
+            var resp = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
+            if (resp.IsSuccessStatusCode)
+            {
+                var courses = await resp.Content.ReadFromJsonAsync<List<SkopskaRawCourse>>(cancellationToken: ct).ConfigureAwait(false) ?? [];
+                var dict = new Dictionary<int, int>();
+                foreach (var c in courses)
+                {
+                    dict[c.Id] = c.RouteId;
+                }
+                _courseToRouteCache.Value = dict;
+                return dict;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to get Skopska courses: {ex.Message}");
+        }
+
+        return _courseToRouteCache.Value ?? [];
+    }
+
+    public async Task<List<Position>> GetCombinedPositionsAsync(string? filterLine = null, CancellationToken ct = default)
+    {
+        return await Task.Run(async () =>
+        {
+            var positions = await GetPositionsAsync(ct).ConfigureAwait(false);
+            if (positions.Count == 0) return [];
+
+            var statuses = await GetStatusesAsync(ct).ConfigureAwait(false);
+            var statusDict = statuses
+                .GroupBy(s => s.VehicleId)
+                .ToDictionary(g => g.Key, g => g.Last());
+
+            Dictionary<int, int>? courseRoutes = null;
+            try
+            {
+                courseRoutes = await GetCourseRoutesAsync(ct).ConfigureAwait(false);
+            }
+            catch {}
+
+            int.TryParse(filterLine, out var parsedFilter);
+
+            var result = new List<Position>();
+            foreach (var pos in positions)
+            {
+                statusDict.TryGetValue(pos.VehicleId, out var st);
+
+                int routeId = 0;
+                if (st != null && courseRoutes != null && courseRoutes.TryGetValue(st.CourseId, out var mappedRoute))
+                {
+                    routeId = mappedRoute;
+                }
+                else if (parsedFilter != 0)
+                {
+                    routeId = parsedFilter;
+                }
+
+                if (!string.IsNullOrEmpty(filterLine) && parsedFilter != 0 && routeId != 0 && routeId != parsedFilter)
+                {
+                    // Filtered out
+                    continue;
+                }
+
+                var p = new Position
+                {
+                    VehicleId = pos.VehicleId,
+                    Lat = pos.Lat,
+                    Lon = pos.Lon,
+                    Time = pos.Time,
+                    Speed = st?.Speed ?? 0,
+                    Delay = st?.Delay ?? 0,
+                    CourseId = st?.CourseId ?? 0,
+                    StopId = st?.StopId ?? 0,
+                    StopIndex = st?.StopIndex ?? 0,
+                    Ignition = pos.Ignition || (st?.Ignition ?? true),
+                    Status = st?.Status ?? "COURSE_EXECUTE",
+                    RouteId = routeId,
+                    Vehicle = new Vehicle
+                    {
+                        Name = pos.VehicleId.ToString(),
+                        Plate = pos.VehicleId.ToString()
+                    }
+                };
+
+                result.Add(p);
+            }
+
+            return result;
+        }, ct).ConfigureAwait(false);
     }
 }
 
@@ -179,6 +246,9 @@ public class SkopskaRawPosition
 
     [JsonPropertyName("time")]
     public int Time { get; set; }
+
+    [JsonPropertyName("ignition")]
+    public bool Ignition { get; set; }
 }
 
 public class SkopskaRawStatus
@@ -188,6 +258,12 @@ public class SkopskaRawStatus
 
     [JsonPropertyName("courseId")]
     public int CourseId { get; set; }
+
+    [JsonPropertyName("stopId")]
+    public int StopId { get; set; }
+
+    [JsonPropertyName("stopIndex")]
+    public int StopIndex { get; set; }
 
     [JsonPropertyName("ignition")]
     public bool Ignition { get; set; }
@@ -200,4 +276,13 @@ public class SkopskaRawStatus
 
     [JsonPropertyName("delay")]
     public int Delay { get; set; }
+}
+
+public class SkopskaRawCourse
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("routeId")]
+    public int RouteId { get; set; }
 }

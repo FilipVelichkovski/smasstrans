@@ -16,7 +16,7 @@ public class UserRouteTrackingViewModel : ViewModelBase
     
     private readonly RouteTrackingService _trackingService;
     private IRouteInfo _selectedRoute;
-    private List<SkopskaStop> _selectedRouteStops;
+    private List<IStop> _selectedRouteStops;
     
     private AvaloniaList<UpcomingStopModel> _upcomingStops = new();
     public AvaloniaList<UpcomingStopModel> UpcomingStops
@@ -68,7 +68,7 @@ public class UserRouteTrackingViewModel : ViewModelBase
     /// <summary>
     /// Start tracking user on a route
     /// </summary>
-    public async Task StartTrackingAsync(IRouteInfo routeInfo, List<SkopskaStop> routeStops)
+    public async Task StartTrackingAsync(IRouteInfo routeInfo, List<IStop> routeStops)
     {
         _selectedRoute = routeInfo;
         _selectedRouteStops = routeStops;

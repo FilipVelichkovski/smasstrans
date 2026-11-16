@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.IO;
+using SMassTrans.Shared.ModeShift;
 
 namespace SMassTrans.Avalonia.Views;
 
@@ -18,7 +19,7 @@ public partial class RouteFindView : UserControl
 {
     private double? fromLat, fromLon, toLat, toLon;
     private string? fromStop, toStop;
-    private List<SkopskaStop>? allStops;
+    private List<Stop>? allStops;
     private MainViewModel? model;
     private List<string> routeResults = new();
 
