@@ -13,6 +13,9 @@
         <Configurations>Debug;Release</Configurations>
         <RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
         <AndroidCreatePackagePerAbi>true</AndroidCreatePackagePerAbi>
+        <NoWarn>$(NoWarn);NU1605;NU1608;MA002</NoWarn>
+        <WarningsNotAsErrors>NU1605;NU1608;MA002</WarningsNotAsErrors>
+        <SkipValidateMauiImplicitPackageReferences>true</SkipValidateMauiImplicitPackageReferences>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(OS)' != 'Windows_NT' ">
         <JavaSdkDirectory Condition=" '$(JavaSdkDirectory)' == '' and exists('/usr/lib/jvm/java-17-openjdk/') ">/usr/lib/jvm/java-17-openjdk/</JavaSdkDirectory>
@@ -29,10 +32,8 @@
     <ItemGroup>
         <PackageReference Include="Avalonia.Android" Version="11.3.14" />
         <PackageReference Include="Avalonia.Maui" Version="11.1.0" />
-        <PackageReference Include="Microsoft.Maui.Essentials" Version="10.0.51" />
+        <PackageReference Include="Microsoft.Maui.Essentials" Version="10.*" />
         <PackageReference Include="Xamarin.AndroidX.Core.SplashScreen" Version="1.2.0.2" />
-        <PackageReference Update="Microsoft.Maui.Controls" Version="8.0.100" />
-        <PackageReference Update="Microsoft.Maui.Controls.Compatibility" Version="8.0.100" />
     </ItemGroup>
 
     <ItemGroup>

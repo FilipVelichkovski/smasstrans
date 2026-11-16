@@ -67,7 +67,7 @@ jobs:
 
       - name: Restore Dependencies
         run: |
-          dotnet restore SMassTrans.Avalonia.Android/SMassTrans.Avalonia.Android.csproj
+          dotnet restore SMassTrans.Avalonia.Android/SMassTrans.Avalonia.Android.csproj --warnaserror:false
 
       - name: Publish Signed ARM64 APK
         env:
@@ -81,6 +81,7 @@ jobs:
             -c "$CONFIG" \
             -f net10.0-android \
             -r android-arm64 \
+            --warnaserror:false \
             -p:AndroidPackageFormat=apk \
             -p:AndroidKeyStore=true \
             -p:AndroidSigningKeyStore="$KEYSTORE_PATH" \
